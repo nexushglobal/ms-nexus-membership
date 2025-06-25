@@ -58,21 +58,6 @@ export class Membership {
     type: 'decimal',
     precision: 10,
     scale: 2,
-    name: 'paid_amount',
-    transformer: {
-      to: (value: number) => value,
-      from: (value: string) => parseFloat(value),
-    },
-  })
-  paidAmount: number;
-
-  @Column({ nullable: true, name: 'payment_reference' })
-  paymentReference?: string;
-
-  @Column({
-    type: 'decimal',
-    precision: 10,
-    scale: 2,
     default: 217,
     name: 'minimum_reconsumption_amount',
     transformer: {
@@ -111,18 +96,8 @@ export class Membership {
       );
     }
 
-    // Validar montos
-    if (this.paidAmount < 0) {
-      throw new Error('El monto pagado no puede ser negativo');
-    }
-
     if (this.minimumReconsumptionAmount < 0) {
       throw new Error('El monto mínimo de reconsumo no puede ser negativo');
-    }
-
-    // Limpiar campos de texto
-    if (this.paymentReference) {
-      this.paymentReference = this.paymentReference.trim();
     }
 
     if (this.userEmail) {
