@@ -1,5 +1,3 @@
-// src/migration/services/membership-migration.service.ts
-
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
@@ -33,9 +31,8 @@ export class MembershipMigrationService {
   private readonly logger = new Logger(MembershipMigrationService.name);
   private readonly usersClient: ClientProxy;
 
-  // Mapeo de IDs antiguos a nuevos IDs
-  private membershipIdMap = new Map<number, number>();
-  private planIdMap = new Map<number, number>();
+  // Ya no necesitamos mapear IDs porque conservamos los originales
+  private processedMembershipIds = new Set<number>();
 
   constructor(
     @InjectRepository(Membership)
@@ -71,12 +68,8 @@ export class MembershipMigrationService {
     };
 
     try {
-      // Limpiar mapeos anteriores
-      this.membershipIdMap.clear();
-      this.planIdMap.clear();
-
-      // Cargar mapeo de planes existentes
-      await this.loadPlanMapping();
+      // Limpiar set de IDs procesados
+      this.processedMembershipIds.clear();
 
       // Paso 1: Crear membresías
       this.logger.log('🎫 Creando membresías...');
@@ -105,20 +98,6 @@ export class MembershipMigrationService {
     return result;
   }
 
-  private async loadPlanMapping(): Promise<void> {
-    this.logger.log('📋 Cargando mapeo de planes...');
-
-    const plans = await this.membershipPlanRepository.find();
-
-    // Crear mapeo basado en el ID del plan de la data de migración
-    // En este caso asumimos que plan_id corresponde al ID en la nueva base de datos
-    for (const plan of plans) {
-      this.planIdMap.set(plan.id, plan.id);
-    }
-
-    this.logger.log(`✅ Cargados ${plans.length} planes`);
-  }
-
   private async createMemberships(
     membershipsData: MembershipMigrationData[],
     details: any,
@@ -127,6 +106,20 @@ export class MembershipMigrationService {
 
     for (const membershipData of membershipsData) {
       try {
+        // Verificar si la membresía ya existe por ID
+        const existingMembership = await this.membershipRepository.findOne({
+          where: { id: membershipData.membership_id },
+        });
+
+        if (existingMembership) {
+          this.logger.warn(
+            `⚠️ Membresía con ID ${membershipData.membership_id} ya existe, saltando...`,
+          );
+          this.processedMembershipIds.add(membershipData.membership_id);
+          details.skipped++;
+          continue;
+        }
+
         // Buscar información del usuario por email
         const userInfo = await this.getUserByEmail(
           membershipData.useremail.trim(),
@@ -136,27 +129,6 @@ export class MembershipMigrationService {
           const errorMsg = `Usuario no encontrado: ${membershipData.useremail}`;
           details.errors.push(errorMsg);
           this.logger.warn(`⚠️ ${errorMsg}`);
-          continue;
-        }
-
-        // Verificar si la membresía ya existe
-        const existingMembership = await this.membershipRepository.findOne({
-          where: {
-            userId: userInfo.id,
-            plan: { id: membershipData.plan_id },
-          },
-          relations: ['plan'],
-        });
-
-        if (existingMembership) {
-          this.logger.warn(
-            `⚠️ Membresía para usuario ${membershipData.useremail} con plan ${membershipData.plan} ya existe, saltando...`,
-          );
-          this.membershipIdMap.set(
-            membershipData.membership_id,
-            existingMembership.id,
-          );
-          details.skipped++;
           continue;
         }
 
@@ -171,8 +143,9 @@ export class MembershipMigrationService {
           );
         }
 
-        // Crear nueva membresía
+        // Crear nueva membresía conservando el ID original
         const newMembership = this.membershipRepository.create({
+          id: membershipData.membership_id, // ⭐ Conservar el ID original
           userId: userInfo.id,
           userEmail: userInfo.email,
           userName: userInfo.fullName,
@@ -196,17 +169,14 @@ export class MembershipMigrationService {
 
         const savedMembership =
           await this.membershipRepository.save(newMembership);
-        this.membershipIdMap.set(
-          membershipData.membership_id,
-          savedMembership.id,
-        );
+        this.processedMembershipIds.add(membershipData.membership_id);
         details.created++;
 
         this.logger.log(
-          `✅ Membresía creada: ${membershipData.useremail} (${membershipData.plan}) -> ID: ${savedMembership.id}`,
+          `✅ Membresía creada: ${membershipData.useremail} (${membershipData.plan}) -> ID: ${savedMembership.id} (conservado)`,
         );
       } catch (error) {
-        const errorMsg = `Error creando membresía para ${membershipData.useremail}: ${error.message}`;
+        const errorMsg = `Error creando membresía ${membershipData.membership_id} para ${membershipData.useremail}: ${error.message}`;
         details.errors.push(errorMsg);
         this.logger.error(`❌ ${errorMsg}`);
       }
@@ -231,21 +201,23 @@ export class MembershipMigrationService {
         continue;
       }
 
-      const membershipId = this.membershipIdMap.get(
-        membershipData.membership_id,
-      );
-      if (!membershipId) {
-        const errorMsg = `Membresía ${membershipData.membership_id} no encontrada para crear reconsumptions`;
+      // Verificar que la membresía fue procesada
+      if (!this.processedMembershipIds.has(membershipData.membership_id)) {
+        const errorMsg = `Membresía ${membershipData.membership_id} no fue procesada para crear reconsumptions`;
         details.errors.push(errorMsg);
         this.logger.error(`❌ ${errorMsg}`);
         continue;
       }
 
+      // Buscar la membresía por ID (ya que conservamos el ID original)
       const membership = await this.membershipRepository.findOne({
-        where: { id: membershipId },
+        where: { id: membershipData.membership_id },
       });
 
       if (!membership) {
+        const errorMsg = `Membresía con ID ${membershipData.membership_id} no encontrada para crear reconsumptions`;
+        details.errors.push(errorMsg);
+        this.logger.error(`❌ ${errorMsg}`);
         continue;
       }
 
@@ -255,7 +227,7 @@ export class MembershipMigrationService {
           const existingReconsumption =
             await this.membershipReconsumptionRepository.findOne({
               where: {
-                membership: { id: membershipId },
+                membership: { id: membershipData.membership_id },
                 periodDate: new Date(reconsumptionData.periodDate),
                 amount: Number(reconsumptionData.amount),
               },
@@ -263,7 +235,7 @@ export class MembershipMigrationService {
 
           if (existingReconsumption) {
             this.logger.warn(
-              `⚠️ Reconsumption ya existe para membresía ${membershipId}, saltando...`,
+              `⚠️ Reconsumption ya existe para membresía ${membershipData.membership_id}, saltando...`,
             );
             details.skipped++;
             continue;
@@ -271,6 +243,7 @@ export class MembershipMigrationService {
 
           const newReconsumption =
             this.membershipReconsumptionRepository.create({
+              id: reconsumptionData.id, // ⭐ Conservar el ID original
               membership: membership,
               amount: Number(reconsumptionData.amount),
               status: this.mapReconsumptionStatus(reconsumptionData.status),
@@ -287,10 +260,10 @@ export class MembershipMigrationService {
           details.created++;
 
           this.logger.log(
-            `✅ Reconsumption creado para membresía ${membershipId}: ${reconsumptionData.amount}`,
+            `✅ Reconsumption creado para membresía ${membershipData.membership_id}: ${reconsumptionData.amount}`,
           );
         } catch (error) {
-          const errorMsg = `Error creando reconsumption para membresía ${membershipId}: ${error.message}`;
+          const errorMsg = `Error creando reconsumption para membresía ${membershipData.membership_id}: ${error.message}`;
           details.errors.push(errorMsg);
           this.logger.error(`❌ ${errorMsg}`);
         }
@@ -317,27 +290,30 @@ export class MembershipMigrationService {
         continue;
       }
 
-      const membershipId = this.membershipIdMap.get(
-        membershipData.membership_id,
-      );
-      if (!membershipId) {
-        const errorMsg = `Membresía ${membershipData.membership_id} no encontrada para crear historial`;
+      // Verificar que la membresía fue procesada
+      if (!this.processedMembershipIds.has(membershipData.membership_id)) {
+        const errorMsg = `Membresía ${membershipData.membership_id} no fue procesada para crear historial`;
         details.errors.push(errorMsg);
         this.logger.error(`❌ ${errorMsg}`);
         continue;
       }
 
+      // Buscar la membresía por ID (ya que conservamos el ID original)
       const membership = await this.membershipRepository.findOne({
-        where: { id: membershipId },
+        where: { id: membershipData.membership_id },
       });
 
       if (!membership) {
+        const errorMsg = `Membresía con ID ${membershipData.membership_id} no encontrada para crear historial`;
+        details.errors.push(errorMsg);
+        this.logger.error(`❌ ${errorMsg}`);
         continue;
       }
 
       for (const historyData of membershipData.membership_history) {
         try {
           const newHistory = this.membershipHistoryRepository.create({
+            id: historyData.id, // ⭐ Conservar el ID original
             membership: membership,
             action: this.mapMembershipAction(historyData.action),
             changes: historyData.changes || undefined,
@@ -354,10 +330,10 @@ export class MembershipMigrationService {
           details.created++;
 
           this.logger.log(
-            `✅ Historia creada para membresía ${membershipId}: ${historyData.action}`,
+            `✅ Historia creada para membresía ${membershipData.membership_id}: ${historyData.action}`,
           );
         } catch (error) {
-          const errorMsg = `Error creando historia para membresía ${membershipId}: ${error.message}`;
+          const errorMsg = `Error creando historia para membresía ${membershipData.membership_id}: ${error.message}`;
           details.errors.push(errorMsg);
           this.logger.error(`❌ ${errorMsg}`);
         }
@@ -480,6 +456,26 @@ export class MembershipMigrationService {
         }
       }
 
+      // Validar que el membership_id sea un número válido
+      if (membership.membership_id !== undefined) {
+        const membershipId = Number(membership.membership_id);
+        if (isNaN(membershipId) || membershipId <= 0) {
+          errors.push(
+            `Membresía en índice ${index} tiene un membership_id inválido: ${membership.membership_id}`,
+          );
+        }
+      }
+
+      // Validar que el plan_id sea un número válido
+      if (membership.plan_id !== undefined) {
+        const planId = Number(membership.plan_id);
+        if (isNaN(planId) || planId <= 0) {
+          errors.push(
+            `Membresía en índice ${index} tiene un plan_id inválido: ${membership.plan_id}`,
+          );
+        }
+      }
+
       // Validar valores numéricos
       if (membership.minimumReconsumptionAmount !== undefined) {
         const amount = Number(membership.minimumReconsumptionAmount);
@@ -545,11 +541,6 @@ export class MembershipMigrationService {
       valid: errors.length === 0,
       errors,
     };
-  }
-
-  private isValidEmail(email: string): boolean {
-    const emailRegex = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/;
-    return emailRegex.test(email);
   }
 
   async onModuleDestroy() {

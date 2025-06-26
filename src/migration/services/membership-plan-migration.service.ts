@@ -62,14 +62,14 @@ export class MembershipPlanMigrationService {
 
     for (const planData of membershipPlansData) {
       try {
-        // Verificar si el plan ya existe por nombre
+        // Verificar si el plan ya existe por ID
         const existingPlan = await this.membershipPlanRepository.findOne({
-          where: { name: planData.name.trim() },
+          where: { id: planData.id },
         });
 
         if (existingPlan) {
           this.logger.warn(
-            `⚠️ Plan de membresía ${planData.name} ya existe, saltando...`,
+            `⚠️ Plan de membresía con ID ${planData.id} ya existe, saltando...`,
           );
           details.skipped++;
           continue;
@@ -79,8 +79,9 @@ export class MembershipPlanMigrationService {
         const cleanProducts = this.cleanStringArray(planData.products);
         const cleanBenefits = this.cleanStringArray(planData.benefits);
 
-        // Crear nuevo plan de membresía
+        // Crear nuevo plan de membresía conservando el ID original
         const newMembershipPlan = this.membershipPlanRepository.create({
+          id: planData.id, // ⭐ Conservar el ID original
           name: planData.name.trim(),
           price: Number(planData.price),
           checkAmount: Number(planData.checkAmount),
@@ -102,10 +103,10 @@ export class MembershipPlanMigrationService {
         details.created++;
 
         this.logger.log(
-          `✅ Plan de membresía creado: ${planData.name} -> ID: ${savedPlan.id}`,
+          `✅ Plan de membresía creado: ${planData.name} -> ID: ${savedPlan.id} (conservado)`,
         );
       } catch (error) {
-        const errorMsg = `Error creando plan de membresía ${planData.name}: ${error.message}`;
+        const errorMsg = `Error creando plan de membresía ${planData.name} (ID: ${planData.id}): ${error.message}`;
         details.errors.push(errorMsg);
         this.logger.error(`❌ ${errorMsg}`);
       }
@@ -153,6 +154,16 @@ export class MembershipPlanMigrationService {
         if (plan[field] === undefined || plan[field] === null) {
           errors.push(
             `Plan de membresía en índice ${index} falta el campo requerido: ${field}`,
+          );
+        }
+      }
+
+      // Validar que el ID sea un número válido
+      if (plan.id !== undefined) {
+        const planId = Number(plan.id);
+        if (isNaN(planId) || planId <= 0) {
+          errors.push(
+            `Plan de membresía en índice ${index} tiene un ID inválido: ${plan.id}`,
           );
         }
       }
@@ -210,8 +221,6 @@ export class MembershipPlanMigrationService {
           `Plan de membresía en índice ${index} - benefits debe ser un array`,
         );
       }
-
-      // Validar fechas
     });
 
     return {
