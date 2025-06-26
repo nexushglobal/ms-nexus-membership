@@ -5,7 +5,7 @@ import {
   Index,
   JoinColumn,
   ManyToOne,
-  PrimaryGeneratedColumn,
+  PrimaryColumn,
 } from 'typeorm';
 import { Membership } from './membership.entity';
 
@@ -25,7 +25,7 @@ export enum MembershipAction {
 @Index(['membership'])
 @Index(['action', 'createdAt'])
 export class MembershipHistory {
-  @PrimaryGeneratedColumn()
+  @PrimaryColumn()
   id: number;
 
   @ManyToOne(() => Membership, { nullable: false, onDelete: 'CASCADE' })

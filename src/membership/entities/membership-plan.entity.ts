@@ -6,7 +6,7 @@ import {
   Entity,
   Index,
   OneToMany,
-  PrimaryGeneratedColumn,
+  PrimaryColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { Membership } from './membership.entity';
@@ -14,7 +14,7 @@ import { Membership } from './membership.entity';
 @Entity('membership_plans')
 @Index(['isActive', 'displayOrder'])
 export class MembershipPlan {
-  @PrimaryGeneratedColumn()
+  @PrimaryColumn()
   id: number;
 
   @Column({ length: 100 })

@@ -8,7 +8,7 @@ import {
   JoinColumn,
   ManyToOne,
   OneToMany,
-  PrimaryGeneratedColumn,
+  PrimaryColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { MembershipPlan } from './membership-plan.entity';
@@ -25,7 +25,7 @@ export enum MembershipStatus {
 @Index(['userId', 'status'])
 @Index(['status', 'endDate'])
 export class Membership {
-  @PrimaryGeneratedColumn()
+  @PrimaryColumn()
   id: number;
 
   @Column({ name: 'user_id' })

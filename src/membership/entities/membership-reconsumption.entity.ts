@@ -7,7 +7,7 @@ import {
   Index,
   JoinColumn,
   ManyToOne,
-  PrimaryGeneratedColumn,
+  PrimaryColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { Membership } from './membership.entity';
@@ -22,7 +22,7 @@ export enum ReconsumptionStatus {
 @Index(['membership', 'periodDate'])
 @Index(['status', 'periodDate'])
 export class MembershipReconsumption {
-  @PrimaryGeneratedColumn()
+  @PrimaryColumn()
   id: number;
 
   @ManyToOne(() => Membership, (membership) => membership.reconsumptions, {
