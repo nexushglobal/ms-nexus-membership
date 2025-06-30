@@ -1,3 +1,4 @@
+import { Membership } from 'src/membership/entities/membership.entity';
 import {
   BeforeInsert,
   BeforeUpdate,
@@ -10,7 +11,6 @@ import {
   PrimaryColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { Membership } from './membership.entity';
 
 export enum ReconsumptionStatus {
   PENDING = 'PENDING',

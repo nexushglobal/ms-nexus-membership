@@ -1,3 +1,5 @@
+import { MembershipPlan } from 'src/membership-plan/entities/membership-plan.entity';
+import { MembershipReconsumption } from 'src/membership-reconsumption/entities/membership-reconsumption.entity';
 import {
   BeforeInsert,
   BeforeUpdate,
@@ -11,8 +13,6 @@ import {
   PrimaryColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { MembershipPlan } from './membership-plan.entity';
-import { MembershipReconsumption } from './membership-reconsumption.entity';
 
 export enum MembershipStatus {
   PENDING = 'PENDING',

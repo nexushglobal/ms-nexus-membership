@@ -1,3 +1,4 @@
+import { Membership } from 'src/membership/entities/membership.entity';
 import {
   BeforeInsert,
   BeforeUpdate,
@@ -9,7 +10,6 @@ import {
   PrimaryColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { Membership } from './membership.entity';
 
 @Entity('membership_plans')
 @Index(['isActive', 'displayOrder'])

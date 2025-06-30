@@ -1,11 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { MembershipPlan } from 'src/membership/entities/membership-plan.entity';
 import { Repository } from 'typeorm';
 import {
   MembershipPlanMigrationData,
   MembershipPlanMigrationResult,
 } from '../interfaces/membership-plan.interfaces';
+import { MembershipPlan } from 'src/membership-plan/entities/membership-plan.entity';
 
 @Injectable()
 export class MembershipPlanMigrationService {

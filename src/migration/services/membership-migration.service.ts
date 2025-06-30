@@ -11,11 +11,6 @@ import {
   Membership,
   MembershipStatus,
 } from 'src/membership/entities/membership.entity';
-import { MembershipPlan } from 'src/membership/entities/membership-plan.entity';
-import {
-  MembershipReconsumption,
-  ReconsumptionStatus,
-} from 'src/membership/entities/membership-reconsumption.entity';
 import {
   MembershipHistory,
   MembershipAction,
@@ -25,6 +20,11 @@ import {
   MembershipMigrationData,
   MembershipMigrationResult,
 } from '../interfaces/membership.interfaces';
+import { MembershipPlan } from 'src/membership-plan/entities/membership-plan.entity';
+import {
+  MembershipReconsumption,
+  ReconsumptionStatus,
+} from 'src/membership-reconsumption/entities/membership-reconsumption.entity';
 
 @Injectable()
 export class MembershipMigrationService {
