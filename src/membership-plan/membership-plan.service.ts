@@ -4,8 +4,8 @@ import { MembershipPlan } from './entities/membership-plan.entity';
 import { Repository } from 'typeorm';
 import { FindMembershipPlansDto } from './dto/find-membership-plan.dto';
 import { MembershipStatus } from 'src/membership/entities/membership.entity';
-import { MembershipService } from 'src/membership/membership.service';
 import { MembershipPlanWithUpgradeDto } from './dto/membership-plan-with-upgrade.dto';
+import { MembershipService } from 'src/membership/services/membership.service';
 
 @Injectable()
 export class MembershipPlanService {

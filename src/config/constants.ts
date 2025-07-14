@@ -1,2 +1,1 @@
-
-export const SERVICE_NAME = 'reservations-service';
+export const SERVICE_NAME = 'ms-nexus-membership';

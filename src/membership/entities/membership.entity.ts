@@ -45,7 +45,7 @@ export class Membership {
   startDate: Date;
 
   @Column({ type: 'date', nullable: true, name: 'end_date' })
-  endDate?: Date;
+  endDate: Date;
 
   @Column({
     type: 'enum',

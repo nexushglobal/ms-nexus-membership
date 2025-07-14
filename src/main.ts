@@ -3,6 +3,9 @@ import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { AppModule } from './app.module';
 import { envs } from './config/envs';
+import { SERVICE_NAME } from './config/constants';
+import { createValidationExceptionFactory } from './common/factories/create-validation-exception.factory';
+import { ServiceIdentifierInterceptor } from './common/interceptors/service-identifier.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(
@@ -23,8 +26,11 @@ async function bootstrap() {
       transformOptions: {
         enableImplicitConversion: true,
       },
+      exceptionFactory: createValidationExceptionFactory(SERVICE_NAME),
     }),
   );
+
+  app.useGlobalInterceptors(new ServiceIdentifierInterceptor(SERVICE_NAME));
 
   await app.listen();
   console.log(
