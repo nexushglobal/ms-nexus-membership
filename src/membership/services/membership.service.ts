@@ -1,4 +1,10 @@
-import { HttpStatus, Injectable, Logger } from '@nestjs/common';
+import {
+  forwardRef,
+  HttpStatus,
+  Inject,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { MembershipReconsumptionService } from 'src/membership-reconsumption/membership-reconsumption.service';
@@ -15,6 +21,7 @@ export class MembershipService extends BaseService<Membership> {
   constructor(
     @InjectRepository(Membership)
     private readonly membershipRepository: Repository<Membership>,
+    @Inject(forwardRef(() => MembershipReconsumptionService))
     private readonly membershipReconsumptionService: MembershipReconsumptionService,
   ) {
     super(membershipRepository);

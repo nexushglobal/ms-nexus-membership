@@ -12,6 +12,6 @@ import { MembershipModule } from 'src/membership/membership.module';
   ],
   controllers: [MembershipReconsumptionController],
   providers: [MembershipReconsumptionService],
-  exports: [MembershipReconsumptionService],
+  exports: [MembershipReconsumptionService, TypeOrmModule],
 })
 export class MembershipReconsumptionModule {}

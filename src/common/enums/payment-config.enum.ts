@@ -1,0 +1,4 @@
+export enum PaymentConfigType {
+  MEMBERSHIP_PAYMENT = 'MEMBERSHIP_PAYMENT',
+  PLAN_UPGRADE = 'PLAN_UPGRADE',
+}

@@ -11,6 +11,8 @@ import { Membership } from './membership.entity';
 
 export enum MembershipAction {
   CREATED = 'CREATED',
+  UPGRADE = 'UPGRADE',
+  PURCHASE = 'PURCHASE',
   RENEWED = 'RENEWED',
   CANCELLED = 'CANCELLED',
   REACTIVATED = 'REACTIVATED',

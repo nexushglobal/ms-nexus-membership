@@ -9,6 +9,6 @@ import { MembershipModule } from 'src/membership/membership.module';
   imports: [TypeOrmModule.forFeature([MembershipPlan]), MembershipModule],
   controllers: [MembershipPlanController],
   providers: [MembershipPlanService],
-  exports: [MembershipPlanService],
+  exports: [MembershipPlanService, TypeOrmModule],
 })
 export class MembershipPlanModule {}
