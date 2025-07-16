@@ -55,13 +55,14 @@ export abstract class BaseSubscriptionService {
   /**
    * Evalúa si el usuario tiene membresía y calcula el monto total
    */
-  protected async evaluateMembershipAndAmount(
+  protected async calculatePricingWithRollback(
     userId: string,
     newPlanId: number,
   ): Promise<{
     totalAmount: number;
     isUpgrade: boolean;
     currentMembership?: Membership;
+    previousMembershipState?: Membership;
   }> {
     // Buscar membresía actual del usuario
     const currentMembership = await this.membershipRepository.findOne({
@@ -108,6 +109,9 @@ export abstract class BaseSubscriptionService {
       });
     }
 
+    // Guardar estado anterior para rollback
+    const previousMembershipState: Membership | undefined = currentMembership;
+
     // Es upgrade: calcular diferencia
     const totalAmount = newPrice - currentPrice;
 
@@ -115,6 +119,7 @@ export abstract class BaseSubscriptionService {
       totalAmount,
       isUpgrade: true,
       currentMembership,
+      previousMembershipState,
     };
   }
 
@@ -287,5 +292,54 @@ export abstract class BaseSubscriptionService {
   async onModuleDestroy() {
     await this.usersClient.close();
     await this.paymentsClient.close();
+  }
+
+  protected async updateMembershipForUpgrade(
+    currentMembership: Membership,
+    newPlan: MembershipPlan,
+  ): Promise<Membership> {
+    // Actualizar la membresía actual con el nuevo plan
+    currentMembership.plan = newPlan;
+    currentMembership.status = MembershipStatus.PENDING;
+
+    return await this.membershipRepository.save(currentMembership);
+  }
+
+  // 4. Método para rollback de upgrade
+  protected async rollbackUpgrade(
+    membershipId: number,
+    previousState: Membership,
+  ): Promise<void> {
+    try {
+      // Restaurar estado anterior
+      await this.membershipRepository.update(membershipId, {
+        plan: previousState.plan,
+        status: previousState.status,
+      });
+
+      this.logger.warn(
+        `Rollback de upgrade ejecutado para membresía ${membershipId}`,
+      );
+    } catch (error) {
+      this.logger.error(`Error en rollback de upgrade: ${error.message}`);
+    }
+  }
+
+  protected async validatePendingMembership(userId: string): Promise<void> {
+    const pendingMembership = await this.membershipRepository.findOne({
+      where: {
+        userId,
+        status: MembershipStatus.PENDING,
+      },
+      relations: ['plan'],
+    });
+
+    if (pendingMembership) {
+      throw new RpcException({
+        status: HttpStatus.BAD_REQUEST,
+        message:
+          'Ya tienes una membresía pendiente. No puedes crear otra hasta que se procese la actual.',
+      });
+    }
   }
 }

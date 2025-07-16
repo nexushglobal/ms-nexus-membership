@@ -1,16 +1,16 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { PaymentConfigType } from 'src/common/enums/payment-config.enum';
 import { PaymentMethod } from 'src/common/enums/payment-method.enum';
 import { MembershipPlan } from 'src/membership-plan/entities/membership-plan.entity';
 import { CreateMembershipSubscriptionDto } from 'src/membership/dto/create-membership-subscription.dto';
 import { Repository } from 'typeorm';
+import { Membership } from '../../entities/membership.entity';
+import { BaseSubscriptionService } from './base-subscription.service';
+import { PaymentConfigType } from 'src/common/enums/payment-config.enum';
 import {
   MembershipAction,
   MembershipHistory,
-} from '../../entities/membership-history.entity';
-import { Membership } from '../../entities/membership.entity';
-import { BaseSubscriptionService } from './base-subscription.service';
+} from 'src/membership/entities/membership-history.entity';
 
 @Injectable()
 export class VoucherSubscriptionService extends BaseSubscriptionService {
@@ -44,17 +44,50 @@ export class VoucherSubscriptionService extends BaseSubscriptionService {
     this.logger.log(`Procesando suscripción VOUCHER para usuario ${userId}`);
 
     try {
-      const { totalAmount, isUpgrade, currentMembership } =
-        await this.evaluateMembershipAndAmount(userId, createDto.planId);
+      // 1. VALIDAR MEMBRESÍA PENDIENTE
+      await this.validatePendingMembership(userId);
 
+      // 2. Obtener información del usuario
       const userInfo = await this.getUserInfo(userId);
 
-      const newMembership = await this.createMembership(
-        userId,
-        userInfo,
-        createDto.planId,
-      );
+      // 3. Calcular precios y determinar si es upgrade
+      const {
+        totalAmount,
+        isUpgrade,
+        currentMembership,
+        previousMembershipState,
+      } = await this.calculatePricingWithRollback(userId, createDto.planId);
 
+      let newMembership: Membership;
+      let membershipForRollback: number | null = null;
+
+      // 4. Crear o actualizar membresía
+      if (isUpgrade && currentMembership) {
+        // Actualizar membresía existente
+        const newPlan = await this.membershipPlanRepository.findOne({
+          where: { id: createDto.planId },
+        });
+        if (!newPlan) {
+          throw new Error('Plan no encontrado');
+        }
+
+        newMembership = await this.updateMembershipForUpgrade(
+          currentMembership,
+          newPlan,
+        );
+        membershipForRollback = newMembership.id;
+      } else {
+        // Crear nueva membresía
+        newMembership = await this.createMembership(
+          userId,
+          userInfo,
+          createDto.planId,
+          new Date(),
+        );
+        membershipForRollback = newMembership.id;
+      }
+
+      // 5. Crear historial de membresía
       await this.createMembershipHistory(
         newMembership.id,
         isUpgrade ? MembershipAction.UPGRADE : MembershipAction.PURCHASE,
@@ -63,9 +96,11 @@ export class VoucherSubscriptionService extends BaseSubscriptionService {
           : `Compra de plan ${newMembership.plan.name}`,
       );
 
+      // 6. Configurar pago
       const paymentConfig = isUpgrade
         ? PaymentConfigType.PLAN_UPGRADE
         : PaymentConfigType.MEMBERSHIP_PAYMENT;
+
       const metadata = isUpgrade
         ? {
             'Desde plan': currentMembership?.plan.name,
@@ -78,6 +113,7 @@ export class VoucherSubscriptionService extends BaseSubscriptionService {
           };
 
       try {
+        // 7. Crear pago
         const payment = await this.createPayment({
           userId,
           userEmail: userInfo.email,
@@ -108,7 +144,15 @@ export class VoucherSubscriptionService extends BaseSubscriptionService {
           },
         };
       } catch (paymentError) {
-        await this.rollbackMembership(newMembership.id);
+        // Rollback específico según el tipo de operación
+        if (isUpgrade && previousMembershipState) {
+          await this.rollbackUpgrade(
+            membershipForRollback,
+            previousMembershipState,
+          );
+        } else {
+          await this.rollbackMembership(membershipForRollback);
+        }
         throw paymentError;
       }
     } catch (error) {
