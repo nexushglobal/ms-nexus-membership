@@ -10,7 +10,7 @@ import {
   JoinColumn,
   ManyToOne,
   OneToMany,
-  PrimaryColumn,
+  PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 
@@ -25,7 +25,7 @@ export enum MembershipStatus {
 @Index(['userId', 'status'])
 @Index(['status', 'endDate'])
 export class Membership {
-  @PrimaryColumn()
+  @PrimaryGeneratedColumn()
   id: number;
 
   @Column({ name: 'user_id' })

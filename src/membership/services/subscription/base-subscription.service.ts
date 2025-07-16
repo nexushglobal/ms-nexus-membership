@@ -227,7 +227,12 @@ export abstract class BaseSubscriptionService {
     relatedEntityId: number;
     metadata: any;
     payments?: any[];
-    files?: Array<{ originalname: string; buffer: Buffer }>;
+    files?: Array<{
+      originalname: string;
+      buffer: Buffer;
+      mimetype: string;
+      size: number;
+    }>;
   }): Promise<any> {
     try {
       const paymentData = {
@@ -244,6 +249,7 @@ export abstract class BaseSubscriptionService {
         payments: data.payments || [],
         files: data.files || [],
       };
+      this.logger.log(`files pago: ${JSON.stringify(data.files)}`);
 
       const payment = await firstValueFrom(
         this.paymentsClient.send({ cmd: 'payment.createPayment' }, paymentData),

@@ -34,7 +34,12 @@ export class VoucherSubscriptionService extends BaseSubscriptionService {
   async processSubscription(
     userId: string,
     createDto: CreateMembershipSubscriptionDto,
-    files: Array<{ originalname: string; buffer: Buffer }>,
+    files: Array<{
+      originalname: string;
+      buffer: Buffer;
+      mimetype: string;
+      size: number;
+    }>,
   ): Promise<any> {
     this.logger.log(`Procesando suscripción VOUCHER para usuario ${userId}`);
 

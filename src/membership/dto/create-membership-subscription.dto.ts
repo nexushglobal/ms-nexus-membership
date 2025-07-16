@@ -17,5 +17,10 @@ export interface CreateMembershipSubscriptionDto {
 export interface CreateSubscriptionPayload {
   userId: string;
   createDto: CreateMembershipSubscriptionDto;
-  files: Array<{ originalname: string; buffer: Buffer }>;
+  files: Array<{
+    originalname: string;
+    buffer: Buffer;
+    mimetype: string;
+    size: number;
+  }>;
 }
