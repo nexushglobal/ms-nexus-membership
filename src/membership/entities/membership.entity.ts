@@ -37,6 +37,12 @@ export class Membership {
   @Column({ name: 'user_name', nullable: true })
   userName?: string; // Nombre completo para referencia
 
+  @Column({ name: 'from_plan', default: false })
+  fromPlan: boolean;
+
+  @Column({ name: 'from_plan_id', nullable: true })
+  fromPlanId?: number;
+
   @ManyToOne(() => MembershipPlan, { nullable: false, eager: true })
   @JoinColumn({ name: 'plan_id' })
   plan: MembershipPlan;

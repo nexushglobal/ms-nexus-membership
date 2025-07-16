@@ -301,6 +301,8 @@ export abstract class BaseSubscriptionService {
     // Actualizar la membresía actual con el nuevo plan
     currentMembership.plan = newPlan;
     currentMembership.status = MembershipStatus.PENDING;
+    currentMembership.fromPlan = true;
+    currentMembership.fromPlanId = currentMembership.plan.id;
 
     return await this.membershipRepository.save(currentMembership);
   }
