@@ -3,6 +3,10 @@ import { RpcException } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import {
+  RejectMembershipDto,
+  RejectPlanUpgradeDto,
+} from '../dto/reject-membership.dto';
+import {
   MembershipAction,
   MembershipHistory,
 } from '../entities/membership-history.entity';
@@ -163,5 +167,107 @@ export class MembershipApprovalService {
     } finally {
       await queryRunner.release();
     }
+  }
+
+  async rejectMembership(data: RejectMembershipDto) {
+    try {
+      const membership = await this.membershipRepository.findOne({
+        where: { id: data.membershipId },
+      });
+
+      if (!membership) {
+        throw new RpcException({
+          status: HttpStatus.NOT_FOUND,
+          message: 'Membership not found',
+        });
+      }
+
+      membership.status = MembershipStatus.DELETED;
+
+      await this.membershipRepository.save(membership);
+
+      await this.createMembershipHistory(
+        data.membershipId,
+        MembershipAction.CANCELLED,
+        `Membresía rechazada: ${data.reason}`,
+      );
+
+      this.logger.log(
+        `Membresía ${data.membershipId} rechazada y marcada como DELETED`,
+      );
+
+      return {
+        success: true,
+        message: 'Membership rejected and deleted successfully',
+        membershipId: data.membershipId,
+      };
+    } catch (error) {
+      this.logger.error(`Error al rechazar membresía: ${error.message}`);
+      throw new RpcException({
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: 'Error al rechazar membresía',
+      });
+    }
+  }
+
+  async rejectPlanUpgrade(data: RejectPlanUpgradeDto) {
+    try {
+      const membership = await this.membershipRepository.findOne({
+        where: { id: data.membershipId },
+        relations: ['plan'],
+      });
+
+      if (!membership) {
+        throw new RpcException({
+          status: HttpStatus.NOT_FOUND,
+          message: 'Membership not found',
+        });
+      }
+
+      const currentPlanId = membership.plan.id;
+
+      // Revertir al plan anterior (fromPlanId)
+      membership.plan = { id: data.fromPlanId } as any;
+      membership.status = MembershipStatus.ACTIVE;
+
+      await this.membershipRepository.save(membership);
+
+      // Crear historial
+      await this.createMembershipHistory(
+        data.membershipId,
+        MembershipAction.CANCELLED,
+        `Upgrade rechazado, revertido del plan ${currentPlanId} al plan ${data.fromPlanId}: ${data.reason}`,
+      );
+
+      this.logger.log(
+        `Plan upgrade rechazado para membresía ${data.membershipId}, revertido al plan ${data.fromPlanId}`,
+      );
+
+      return {
+        success: true,
+        message: 'Plan upgrade rejected, reverted to previous plan',
+        membershipId: data.membershipId,
+        revertedToPlanId: data.fromPlanId,
+      };
+    } catch (error) {
+      this.logger.error(`Error al rechazar upgrade de plan: ${error.message}`);
+      throw new RpcException({
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: 'Error al rechazar upgrade de plan',
+      });
+    }
+  }
+  private async createMembershipHistory(
+    membershipId: number,
+    action: MembershipAction,
+    details: string,
+  ): Promise<void> {
+    const history = this.membershipHistoryRepository.create({
+      membership: { id: membershipId },
+      action,
+      metadata: { details },
+    });
+
+    await this.membershipHistoryRepository.save(history);
   }
 }

@@ -1,6 +1,10 @@
 import { Controller, Logger } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { MembershipApprovalService } from '../services/membership-approval.service';
+import {
+  RejectMembershipDto,
+  RejectPlanUpgradeDto,
+} from '../dto/reject-membership.dto';
 
 @Controller()
 export class MembershipApprovalController {
@@ -40,5 +44,19 @@ export class MembershipApprovalController {
     );
 
     return await this.membershipApprovalService.approvePlanUpgrade(data);
+  }
+
+  @MessagePattern({ cmd: 'membership.rejectMembership' })
+  async rejectMembership(@Payload() data: RejectMembershipDto) {
+    this.logger.log(`Rechazando membresía ID: ${data.membershipId}`);
+    return await this.membershipApprovalService.rejectMembership(data);
+  }
+
+  @MessagePattern({ cmd: 'membership.rejectPlanUpgrade' })
+  async rejectPlanUpgrade(@Payload() data: RejectPlanUpgradeDto) {
+    this.logger.log(
+      `Rechazando upgrade de plan para membresía ID: ${data.membershipId}`,
+    );
+    return await this.membershipApprovalService.rejectPlanUpgrade(data);
   }
 }
