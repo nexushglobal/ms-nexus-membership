@@ -1,10 +1,7 @@
 import { Controller, Logger } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { MembershipApprovalService } from '../services/membership-approval.service';
-import {
-  RejectMembershipDto,
-  RejectPlanUpgradeDto,
-} from '../dto/reject-membership.dto';
+import { RejectPlanUpgradeDto } from '../dto/reject-membership.dto';
 
 @Controller()
 export class MembershipApprovalController {
@@ -47,7 +44,14 @@ export class MembershipApprovalController {
   }
 
   @MessagePattern({ cmd: 'membership.rejectMembership' })
-  async rejectMembership(@Payload() data: RejectMembershipDto) {
+  async rejectMembership(
+    @Payload()
+    data: {
+      membershipId: number;
+      paymentId: number;
+      reason: string;
+    },
+  ) {
     this.logger.log(`Rechazando membresía ID: ${data.membershipId}`);
     return await this.membershipApprovalService.rejectMembership(data);
   }

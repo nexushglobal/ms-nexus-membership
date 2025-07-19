@@ -2,10 +2,7 @@ import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
-import {
-  RejectMembershipDto,
-  RejectPlanUpgradeDto,
-} from '../dto/reject-membership.dto';
+import { RejectPlanUpgradeDto } from '../dto/reject-membership.dto';
 import {
   MembershipAction,
   MembershipHistory,
@@ -169,8 +166,13 @@ export class MembershipApprovalService {
     }
   }
 
-  async rejectMembership(data: RejectMembershipDto) {
+  async rejectMembership(data: {
+    membershipId: number;
+    paymentId: number;
+    reason: string;
+  }) {
     try {
+      console.log('Rechazando membresía:', data);
       const membership = await this.membershipRepository.findOne({
         where: { id: data.membershipId },
       });
@@ -187,7 +189,7 @@ export class MembershipApprovalService {
       await this.membershipRepository.save(membership);
 
       await this.createMembershipHistory(
-        data.membershipId,
+        membership,
         MembershipAction.CANCELLED,
         `Membresía rechazada: ${data.reason}`,
       );
@@ -234,7 +236,7 @@ export class MembershipApprovalService {
 
       // Crear historial
       await this.createMembershipHistory(
-        data.membershipId,
+        membership,
         MembershipAction.CANCELLED,
         `Upgrade rechazado, revertido del plan ${currentPlanId} al plan ${data.fromPlanId}: ${data.reason}`,
       );
@@ -258,12 +260,12 @@ export class MembershipApprovalService {
     }
   }
   private async createMembershipHistory(
-    membershipId: number,
+    membership: Membership,
     action: MembershipAction,
     details: string,
   ): Promise<void> {
     const history = this.membershipHistoryRepository.create({
-      membership: { id: membershipId },
+      membership: membership,
       action,
       metadata: { details },
     });

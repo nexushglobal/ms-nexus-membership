@@ -6,7 +6,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { MembershipReconsumptionService } from 'src/membership-reconsumption/membership-reconsumption.service';
 import { Membership, MembershipStatus } from '../entities/membership.entity';
 import { UserMembershipInfoDto } from '../dto/user-membership-info.dto';
@@ -28,7 +28,15 @@ export class MembershipService extends BaseService<Membership> {
   }
   async getUserMembershipInfo(userId: string): Promise<UserMembershipInfoDto> {
     const userMembership = await this.membershipRepository.findOne({
-      where: { userId },
+      where: {
+        userId,
+        status: In([
+          MembershipStatus.ACTIVE,
+          MembershipStatus.PENDING,
+          MembershipStatus.EXPIRED,
+          MembershipStatus.INACTIVE,
+        ]),
+      },
       relations: ['plan'],
       order: { createdAt: 'DESC' },
     });
