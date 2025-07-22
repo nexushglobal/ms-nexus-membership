@@ -1,6 +1,7 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
+import { MembershipPlan } from 'src/membership-plan/entities/membership-plan.entity';
 import { DataSource, Repository } from 'typeorm';
 import { RejectPlanUpgradeDto } from '../dto/reject-membership.dto';
 import {
@@ -8,7 +9,6 @@ import {
   MembershipHistory,
 } from '../entities/membership-history.entity';
 import { Membership, MembershipStatus } from '../entities/membership.entity';
-import { MembershipPlan } from 'src/membership-plan/entities/membership-plan.entity';
 
 @Injectable()
 export class MembershipApprovalService {
