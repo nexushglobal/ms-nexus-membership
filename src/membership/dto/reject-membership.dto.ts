@@ -7,8 +7,5 @@ export class RejectMembershipDto {
 export class RejectPlanUpgradeDto {
   membershipId: number;
   paymentId: number;
-  fromPlanId: number;
   reason: string;
-  rejectedAt: Date;
-  rejectedBy: string;
 }

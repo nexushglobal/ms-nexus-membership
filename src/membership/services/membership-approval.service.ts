@@ -8,6 +8,7 @@ import {
   MembershipHistory,
 } from '../entities/membership-history.entity';
 import { Membership, MembershipStatus } from '../entities/membership.entity';
+import { MembershipPlan } from 'src/membership-plan/entities/membership-plan.entity';
 
 @Injectable()
 export class MembershipApprovalService {
@@ -16,6 +17,8 @@ export class MembershipApprovalService {
   constructor(
     @InjectRepository(Membership)
     private readonly membershipRepository: Repository<Membership>,
+    @InjectRepository(MembershipPlan)
+    private readonly membershipPlanRepository: Repository<MembershipPlan>,
     @InjectRepository(MembershipHistory)
     private readonly membershipHistoryRepository: Repository<MembershipHistory>,
     private readonly dataSource: DataSource,
@@ -48,6 +51,7 @@ export class MembershipApprovalService {
       await queryRunner.manager.save(Membership, membership);
 
       // 3. Crear entrada en el historial
+      const date = new Date(data.approvedAt);
       const historyEntry = this.membershipHistoryRepository.create({
         membership: membership,
         action: MembershipAction.PAYMENT_RECEIVED,
@@ -57,8 +61,8 @@ export class MembershipApprovalService {
           'Monto del Pago': data.amount,
           'Estado de la Membresía': 'APROBADA',
           'Plan de Membresía': membership.plan.name,
-          'Fecha de Aprobación': data.approvedAt.toLocaleDateString('es-ES'),
-          'Hora de Aprobación': data.approvedAt.toLocaleTimeString('es-ES'),
+          'Fecha de Aprobación': date.toLocaleDateString('es-ES'),
+          'Hora de Aprobación': date.toLocaleTimeString('es-ES'),
           Descripción: `Membresía aprobada exitosamente para el plan ${membership.plan.name}`,
         },
       });
@@ -117,6 +121,7 @@ export class MembershipApprovalService {
 
       membership.status = MembershipStatus.ACTIVE;
       await queryRunner.manager.save(Membership, membership);
+      const date = new Date(data.approvedAt);
 
       const historyEntry = this.membershipHistoryRepository.create({
         membership: membership,
@@ -128,8 +133,8 @@ export class MembershipApprovalService {
           'Plan Anterior': previousPlan.name,
           'Plan Actual': membership.plan.name,
           'Estado de la Membresía': 'APROBADA',
-          'Fecha de Aprobación': data.approvedAt.toLocaleDateString('es-ES'),
-          'Hora de Aprobación': data.approvedAt.toLocaleTimeString('es-ES'),
+          'Fecha de Aprobación': date.toLocaleDateString('es-ES'),
+          'Hora de Aprobación': date.toLocaleTimeString('es-ES'),
           Descripción: `Upgrade exitoso de ${previousPlan.name} a ${membership.plan.name}`,
           'Costo del Upgrade': `$${data.upgradeAmount}`,
         },
@@ -226,10 +231,24 @@ export class MembershipApprovalService {
         });
       }
 
-      const currentPlanId = membership.plan.id;
+      if (!membership.fromPlan || !membership.fromPlanId) {
+        throw new RpcException({
+          status: HttpStatus.BAD_REQUEST,
+          message: 'This membership is not an upgrade',
+        });
+      }
 
-      // Revertir al plan anterior (fromPlanId)
-      membership.plan = { id: data.fromPlanId } as any;
+      const fromPlan = await this.membershipPlanRepository.findOne({
+        where: { id: membership.fromPlanId },
+      });
+
+      if (!fromPlan) {
+        throw new RpcException({
+          status: HttpStatus.NOT_FOUND,
+          message: 'Original plan not found',
+        });
+      }
+      membership.plan = fromPlan;
       membership.status = MembershipStatus.ACTIVE;
 
       await this.membershipRepository.save(membership);
@@ -238,18 +257,18 @@ export class MembershipApprovalService {
       await this.createMembershipHistory(
         membership,
         MembershipAction.CANCELLED,
-        `Upgrade rechazado, revertido del plan ${currentPlanId} al plan ${data.fromPlanId}: ${data.reason}`,
+        `Upgrade rechazado, revertido del plan ${membership.plan.id} al plan ${membership.fromPlanId}: ${data.reason}`,
       );
 
       this.logger.log(
-        `Plan upgrade rechazado para membresía ${data.membershipId}, revertido al plan ${data.fromPlanId}`,
+        `Plan upgrade rechazado para membresía ${data.membershipId}, revertido al plan ${membership.fromPlanId}`,
       );
 
       return {
         success: true,
-        message: 'Plan upgrade rejected, reverted to previous plan',
+        message: 'Plan upgrade rechazado y revertido exitosamente',
         membershipId: data.membershipId,
-        revertedToPlanId: data.fromPlanId,
+        revertedToPlanId: membership.fromPlanId,
       };
     } catch (error) {
       this.logger.error(`Error al rechazar upgrade de plan: ${error.message}`);

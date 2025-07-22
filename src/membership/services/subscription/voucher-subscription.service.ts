@@ -1,16 +1,16 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { PaymentConfigType } from 'src/common/enums/payment-config.enum';
 import { PaymentMethod } from 'src/common/enums/payment-method.enum';
 import { MembershipPlan } from 'src/membership-plan/entities/membership-plan.entity';
 import { CreateMembershipSubscriptionDto } from 'src/membership/dto/create-membership-subscription.dto';
-import { Repository } from 'typeorm';
-import { Membership } from '../../entities/membership.entity';
-import { BaseSubscriptionService } from './base-subscription.service';
-import { PaymentConfigType } from 'src/common/enums/payment-config.enum';
 import {
   MembershipAction,
   MembershipHistory,
 } from 'src/membership/entities/membership-history.entity';
+import { Repository } from 'typeorm';
+import { Membership } from '../../entities/membership.entity';
+import { BaseSubscriptionService } from './base-subscription.service';
 
 @Injectable()
 export class VoucherSubscriptionService extends BaseSubscriptionService {
@@ -63,13 +63,14 @@ export class VoucherSubscriptionService extends BaseSubscriptionService {
 
       // 4. Crear o actualizar membresía
       if (isUpgrade && currentMembership) {
-        // Actualizar membresía existente
         const newPlan = await this.membershipPlanRepository.findOne({
           where: { id: createDto.planId },
         });
         if (!newPlan) {
           throw new Error('Plan no encontrado');
         }
+        console.log(currentMembership);
+        console.log(newPlan);
 
         newMembership = await this.updateMembershipForUpgrade(
           currentMembership,

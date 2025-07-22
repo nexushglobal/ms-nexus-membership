@@ -1,25 +1,24 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import {
   ClientProxy,
   ClientProxyFactory,
-  Transport,
   RpcException,
+  Transport,
 } from '@nestjs/microservices';
-import { HttpStatus } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
 import { firstValueFrom } from 'rxjs';
-import { envs } from 'src/config/envs';
-import { Membership, MembershipStatus } from '../../entities/membership.entity';
-import {
-  MembershipHistory,
-  MembershipAction,
-} from '../../entities/membership-history.entity';
-import { MembershipPlan } from 'src/membership-plan/entities/membership-plan.entity';
-import { calculateMembershipDates } from 'src/common/utils/date.utils';
-import { PaymentMethod } from 'src/common/enums/payment-method.enum';
 import { PaymentConfigType } from 'src/common/enums/payment-config.enum';
+import { PaymentMethod } from 'src/common/enums/payment-method.enum';
+import { calculateMembershipDates } from 'src/common/utils/date.utils';
+import { envs } from 'src/config/envs';
+import { MembershipPlan } from 'src/membership-plan/entities/membership-plan.entity';
 import { CreateMembershipSubscriptionDto } from 'src/membership/dto/create-membership-subscription.dto';
+import { Repository } from 'typeorm';
+import {
+  MembershipAction,
+  MembershipHistory,
+} from '../../entities/membership-history.entity';
+import { Membership, MembershipStatus } from '../../entities/membership.entity';
 
 @Injectable()
 export abstract class BaseSubscriptionService {
@@ -90,8 +89,19 @@ export abstract class BaseSubscriptionService {
         isUpgrade: false,
       };
     }
+    if (currentMembership.status === MembershipStatus.PENDING) {
+      throw new RpcException({
+        status: HttpStatus.BAD_REQUEST,
+        message: `Ya tienes una membresía pendiente. No puedes crear otra hasta que se procese la actual.`,
+      });
+    }
+    if (currentMembership.status === MembershipStatus.DELETED) {
+      return {
+        totalAmount: newPlan.price,
+        isUpgrade: false,
+      };
+    }
 
-    // Si tiene membresía, evaluar upgrade
     const currentPrice = currentMembership.plan.price;
     const newPrice = newPlan.price;
 
@@ -179,9 +189,22 @@ export abstract class BaseSubscriptionService {
         message: 'Plan de membresía no encontrado',
       });
     }
-
+    // buscar si tiene membresia
+    const existingMembership = await this.membershipRepository.findOne({
+      where: { userId },
+    });
     const { startDate: membershipStart, endDate: membershipEnd } =
       calculateMembershipDates(startDate);
+
+    if (existingMembership) {
+      existingMembership.plan = plan;
+      existingMembership.status = MembershipStatus.PENDING;
+      existingMembership.startDate = membershipStart;
+      existingMembership.endDate = membershipEnd;
+      existingMembership.userEmail = userInfo.email;
+      existingMembership.userName = userInfo.fullName;
+      return await this.membershipRepository.save(existingMembership);
+    }
 
     const membership = this.membershipRepository.create({
       userId,
@@ -254,7 +277,6 @@ export abstract class BaseSubscriptionService {
         payments: data.payments || [],
         files: data.files || [],
       };
-      this.logger.log(`files pago: ${JSON.stringify(data.files)}`);
 
       const payment = await firstValueFrom(
         this.paymentsClient.send({ cmd: 'payment.createPayment' }, paymentData),
@@ -298,11 +320,10 @@ export abstract class BaseSubscriptionService {
     currentMembership: Membership,
     newPlan: MembershipPlan,
   ): Promise<Membership> {
-    // Actualizar la membresía actual con el nuevo plan
+    currentMembership.fromPlanId = currentMembership.plan.id;
     currentMembership.plan = newPlan;
     currentMembership.status = MembershipStatus.PENDING;
     currentMembership.fromPlan = true;
-    currentMembership.fromPlanId = currentMembership.plan.id;
 
     return await this.membershipRepository.save(currentMembership);
   }
