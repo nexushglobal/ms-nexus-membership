@@ -261,6 +261,7 @@ export abstract class BaseSubscriptionService {
       mimetype: string;
       size: number;
     }>;
+    source_id?: string;
   }): Promise<any> {
     try {
       const paymentData = {
@@ -276,6 +277,7 @@ export abstract class BaseSubscriptionService {
         metadata: data.metadata,
         payments: data.payments || [],
         files: data.files || [],
+        source_id: data.source_id,
       };
 
       const payment = await firstValueFrom(

@@ -12,6 +12,7 @@ export interface CreateMembershipSubscriptionDto {
   paymentMethod: PaymentMethod;
   planId: number;
   payments?: PaymentDetailDto[];
+  source_id?: string;
 }
 
 export interface CreateSubscriptionPayload {

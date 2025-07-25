@@ -69,8 +69,6 @@ export class VoucherSubscriptionService extends BaseSubscriptionService {
         if (!newPlan) {
           throw new Error('Plan no encontrado');
         }
-        console.log(currentMembership);
-        console.log(newPlan);
 
         newMembership = await this.updateMembershipForUpgrade(
           currentMembership,

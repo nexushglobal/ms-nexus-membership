@@ -25,7 +25,6 @@ export class MembershipSubscriptionService {
       `Creando suscripción para usuario ${userId} con método ${createDto.paymentMethod}`,
     );
 
-    // Validar método de pago
     if (!Object.values(PaymentMethod).includes(createDto.paymentMethod)) {
       throw new RpcException({
         status: HttpStatus.BAD_REQUEST,
@@ -33,19 +32,16 @@ export class MembershipSubscriptionService {
       });
     }
 
-    // Validar que para VOUCHER se envíen los payments
-    if (createDto.paymentMethod === PaymentMethod.VOUCHER) {
-      if (!createDto.payments || createDto.payments.length === 0) {
-        throw new RpcException({
-          status: HttpStatus.BAD_REQUEST,
-          message: 'Para el método VOUCHER se requieren los detalles de pago',
-        });
-      }
-    }
-
     try {
       switch (createDto.paymentMethod) {
         case PaymentMethod.VOUCHER:
+          if (!createDto.payments || createDto.payments.length === 0) {
+            throw new RpcException({
+              status: HttpStatus.BAD_REQUEST,
+              message:
+                'Para el método VOUCHER se requieren los detalles de pago',
+            });
+          }
           return await this.voucherSubscriptionService.processSubscription(
             userId,
             createDto,
@@ -60,10 +56,16 @@ export class MembershipSubscriptionService {
           );
 
         case PaymentMethod.PAYMENT_GATEWAY:
+          if (!createDto.source_id) {
+            throw new RpcException({
+              status: HttpStatus.BAD_REQUEST,
+              message:
+                'Para el método PAYMENT_GATEWAY se requiere el source_id',
+            });
+          }
           return await this.paymentGatewaySubscriptionService.processSubscription(
             userId,
             createDto,
-            files,
           );
 
         default:
