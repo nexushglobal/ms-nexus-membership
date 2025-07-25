@@ -1,10 +1,10 @@
 import { Controller } from '@nestjs/common';
-import { MembershipService } from './services/membership.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { FindByMembershipIdDto } from 'src/membership-reconsumption/dto/find-by-membership-id.dto';
+import { CreateSubscriptionPayload } from './dto/create-membership-subscription.dto';
 import { MembershipHistoryService } from './services/membership-history.service';
 import { MembershipSubscriptionService } from './services/membership-subscription.service';
-import { CreateSubscriptionPayload } from './dto/create-membership-subscription.dto';
+import { MembershipService } from './services/membership.service';
 
 @Controller()
 export class MembershipController {
@@ -23,6 +23,11 @@ export class MembershipController {
   @MessagePattern({ cmd: 'membershipHistory.findAllByMembershipId' })
   getMembershipHistory(@Payload() data: FindByMembershipIdDto) {
     return this.membershipHistoryService.findAllByMembershipId(data);
+  }
+
+  @MessagePattern({ cmd: 'membership.getUserMembershipInfo' })
+  getUserMembershipInfo(@Payload('userId') userId: string) {
+    return this.membershipService.getUserMembershipInfo(userId);
   }
 
   @MessagePattern({ cmd: 'membership.createSubscription' })
