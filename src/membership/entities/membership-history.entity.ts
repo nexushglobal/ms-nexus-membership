@@ -11,8 +11,6 @@ import { Membership } from './membership.entity';
 
 export enum MembershipAction {
   CREATED = 'CREATED',
-  UPGRADE = 'UPGRADE',
-  PURCHASE = 'PURCHASE',
   RENEWED = 'RENEWED',
   CANCELLED = 'CANCELLED',
   REACTIVATED = 'REACTIVATED',
@@ -21,7 +19,7 @@ export enum MembershipAction {
   PAYMENT_RECEIVED = 'PAYMENT_RECEIVED',
   PLAN_CHANGED = 'PLAN_CHANGED',
   RECONSUMPTION_ADDED = 'RECONSUMPTION_ADDED',
-  PURCHASE = 'PURCHASE', // ✅ Agrega este
+  PURCHASE = 'PURCHASE',
   UPGRADE = 'UPGRADE',
 }
 
