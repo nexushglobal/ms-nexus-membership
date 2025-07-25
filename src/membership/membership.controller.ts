@@ -21,4 +21,9 @@ export class MembershipController {
   getMembershipHistory(@Payload() data: FindByMembershipIdDto) {
     return this.membershipHistoryService.findAllByMembershipId(data);
   }
+
+  @MessagePattern({ cmd: 'membership.getUserMembershipInfo' })
+  getUserMembershipInfo(@Payload('userId') userId: string) {
+    return this.membershipService.getUserMembershipInfo(userId);
+  }
 }

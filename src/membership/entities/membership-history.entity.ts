@@ -19,6 +19,8 @@ export enum MembershipAction {
   PAYMENT_RECEIVED = 'PAYMENT_RECEIVED',
   PLAN_CHANGED = 'PLAN_CHANGED',
   RECONSUMPTION_ADDED = 'RECONSUMPTION_ADDED',
+  PURCHASE = 'PURCHASE', // ✅ Agrega este
+  UPGRADE = 'UPGRADE',
 }
 
 @Entity('membership_history')

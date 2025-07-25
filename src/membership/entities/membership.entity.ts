@@ -19,6 +19,7 @@ export enum MembershipStatus {
   ACTIVE = 'ACTIVE',
   INACTIVE = 'INACTIVE',
   EXPIRED = 'EXPIRED',
+  DELETED = 'DELETED',
 }
 
 @Entity('memberships')
