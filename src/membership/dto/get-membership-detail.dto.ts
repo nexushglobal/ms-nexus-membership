@@ -6,6 +6,7 @@ export class GetMembershipDetailResponseDto {
     endDate: Date;
     autoRenewal: boolean;
     paidAmount: number;
+    metadata: Record<string, any>;
     plan: {
       id: number;
       name: string;

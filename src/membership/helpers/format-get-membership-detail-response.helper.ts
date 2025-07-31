@@ -1,6 +1,6 @@
 import { MembershipReconsumption } from 'src/membership-reconsumption/entities/membership-reconsumption.entity';
-import { Membership } from '../entities/membership.entity';
 import { GetMembershipDetailResponseDto } from '../dto/get-membership-detail.dto';
+import { Membership } from '../entities/membership.entity';
 
 export const formatGetMembershipDetailResponse = (
   membership: Membership,
@@ -16,6 +16,7 @@ export const formatGetMembershipDetailResponse = (
       endDate: membership.endDate,
       autoRenewal: membership.autoRenewal,
       paidAmount: membership.plan.price,
+      metadata: membership.metadata ? membership.metadata : {},
       plan: {
         id: membership.plan.id,
         name: membership.plan.name,
