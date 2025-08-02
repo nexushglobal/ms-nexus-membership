@@ -43,7 +43,7 @@ export class MembershipPlan {
   })
   checkAmount: number;
 
-  @Column({ type: 'int' })
+  @Column({ type: 'int', name: 'binary_points', default: 0 })
   binaryPoints: number;
 
   @Column({
