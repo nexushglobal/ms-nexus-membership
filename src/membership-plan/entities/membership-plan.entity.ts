@@ -32,6 +32,7 @@ export class MembershipPlan {
   price: number;
 
   @Column({
+    name: 'check_amount',
     type: 'decimal',
     precision: 10,
     scale: 2,
@@ -46,6 +47,7 @@ export class MembershipPlan {
   binaryPoints: number;
 
   @Column({
+    name: 'commission_percentage',
     type: 'decimal',
     precision: 5,
     scale: 2,
@@ -57,6 +59,7 @@ export class MembershipPlan {
   commissionPercentage: number;
 
   @Column({
+    name: 'direct_commission_amount',
     type: 'decimal',
     precision: 10,
     scale: 2,
