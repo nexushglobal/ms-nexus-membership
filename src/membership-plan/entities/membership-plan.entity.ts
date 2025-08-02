@@ -74,7 +74,7 @@ export class MembershipPlan {
   @Column('text', { array: true, default: [] })
   benefits: string[];
 
-  @Column({ default: true })
+  @Column({ default: true, name: 'is_active' })
   isActive: boolean;
 
   @Column({ type: 'int', default: 0, name: 'display_order' })
