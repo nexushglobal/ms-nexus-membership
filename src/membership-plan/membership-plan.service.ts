@@ -1,11 +1,12 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { RpcException } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
-import { MembershipPlan } from './entities/membership-plan.entity';
+import { MembershipStatus } from 'src/membership/entities/membership.entity';
+import { MembershipService } from 'src/membership/services/membership.service';
 import { Repository } from 'typeorm';
 import { FindMembershipPlansDto } from './dto/find-membership-plan.dto';
-import { MembershipStatus } from 'src/membership/entities/membership.entity';
 import { MembershipPlanWithUpgradeDto } from './dto/membership-plan-with-upgrade.dto';
-import { MembershipService } from 'src/membership/services/membership.service';
+import { MembershipPlan } from './entities/membership-plan.entity';
 
 @Injectable()
 export class MembershipPlanService {
@@ -91,12 +92,11 @@ export class MembershipPlanService {
         where: { id },
       });
 
-      if (!plan) {
-        throw new NotFoundException(
-          `Plan de membresía con ID ${id} no encontrado`,
-        );
-      }
-
+      if (!plan)
+        throw new RpcException({
+          status: HttpStatus.NOT_FOUND,
+          message: `Plan de membresía con ID ${id} no encontrado`,
+        });
       const result = { ...plan };
 
       // Si el usuario tiene membresía activa, calcular información de upgrade
