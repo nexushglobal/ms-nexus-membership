@@ -32,6 +32,7 @@ export class MembershipPlan {
   price: number;
 
   @Column({
+    name: 'check_amount',
     type: 'decimal',
     precision: 10,
     scale: 2,
@@ -42,10 +43,11 @@ export class MembershipPlan {
   })
   checkAmount: number;
 
-  @Column({ type: 'int' })
+  @Column({ type: 'int', name: 'binary_points', default: 0 })
   binaryPoints: number;
 
   @Column({
+    name: 'commission_percentage',
     type: 'decimal',
     precision: 5,
     scale: 2,
@@ -57,6 +59,7 @@ export class MembershipPlan {
   commissionPercentage: number;
 
   @Column({
+    name: 'direct_commission_amount',
     type: 'decimal',
     precision: 10,
     scale: 2,
@@ -74,7 +77,7 @@ export class MembershipPlan {
   @Column('text', { array: true, default: [] })
   benefits: string[];
 
-  @Column({ default: true })
+  @Column({ default: true, name: 'is_active' })
   isActive: boolean;
 
   @Column({ type: 'int', default: 0, name: 'display_order' })
