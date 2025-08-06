@@ -133,14 +133,10 @@ export class VoucherSubscriptionService extends BaseSubscriptionService {
         );
 
         return {
-          success: true,
-          message: 'Suscripción creada exitosamente',
-          data: {
-            membership: newMembership,
-            payment,
-            isUpgrade,
-            totalAmount,
-          },
+          membership: newMembership,
+          payment,
+          isUpgrade,
+          totalAmount,
         };
       } catch (paymentError) {
         // Rollback específico según el tipo de operación
