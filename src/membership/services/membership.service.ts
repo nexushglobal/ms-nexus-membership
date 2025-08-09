@@ -5,15 +5,20 @@ import {
   Injectable,
   Logger,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
-import { MembershipReconsumptionService } from 'src/membership-reconsumption/membership-reconsumption.service';
-import { Membership, MembershipStatus } from '../entities/membership.entity';
-import { UserMembershipInfoDto } from '../dto/user-membership-info.dto';
-import { BaseService } from 'src/common/services/base.service';
-import { GetMembershipDetailResponseDto } from '../dto/get-membership-detail.dto';
-import { formatGetMembershipDetailResponse } from '../helpers/format-get-membership-detail-response.helper';
 import { RpcException } from '@nestjs/microservices';
+import { InjectRepository } from '@nestjs/typeorm';
+import { BaseService } from 'src/common/services/base.service';
+import { MembershipReconsumptionService } from 'src/membership-reconsumption/membership-reconsumption.service';
+import { In, Repository } from 'typeorm';
+import {
+  CheckUserActiveMembershipResponseDto,
+  UserActiveMembershipResultDto,
+} from '../dto/check-user-active-membership.dto';
+import { GetMembershipDetailResponseDto } from '../dto/get-membership-detail.dto';
+import { GetUserMembershipByUserIdResponseDto } from '../dto/get-user-membership-by-user-id.dto';
+import { UserMembershipInfoDto } from '../dto/user-membership-info.dto';
+import { Membership, MembershipStatus } from '../entities/membership.entity';
+import { formatGetMembershipDetailResponse } from '../helpers/format-get-membership-detail-response.helper';
 
 @Injectable()
 export class MembershipService extends BaseService<Membership> {
@@ -121,5 +126,112 @@ export class MembershipService extends BaseService<Membership> {
         message: 'El usuario no tiene una membresía activa',
       });
     return membership;
+  }
+
+  async getUserMembershipByUserId(
+    userId: string,
+  ): Promise<GetUserMembershipByUserIdResponseDto> {
+    try {
+      // Buscar membresía activa del usuario
+      const membership = await this.membershipRepository.findOne({
+        where: {
+          userId,
+          status: MembershipStatus.ACTIVE,
+        },
+        relations: ['plan'],
+      });
+
+      // Si no tiene membresía activa
+      if (!membership) {
+        return {
+          hasActiveMembership: false,
+          message: 'El usuario no tiene membresía activa',
+        };
+      }
+
+      // Si tiene membresía activa, retornar los datos
+      return {
+        hasActiveMembership: true,
+        id: membership.id,
+        userId: membership.userId,
+        userName: membership.userName,
+        userEmail: membership.userEmail,
+        plan: {
+          id: membership.plan.id,
+          name: membership.plan.name,
+          commissionPercentage: membership.plan.commissionPercentage,
+          directCommissionAmount: membership.plan.directCommissionAmount,
+        },
+      };
+    } catch (error) {
+      this.logger.error(
+        `Error getting user membership for userId ${userId}: ${error.message}`,
+      );
+
+      // Si es un error relacionado con que el usuario no existe
+      if (
+        error.message.includes('user not found') ||
+        error.message.includes('usuario no existe')
+      ) {
+        return {
+          hasActiveMembership: false,
+          message: 'El usuario no existe',
+        };
+      }
+
+      // Para otros errores, retornar mensaje genérico
+      return {
+        hasActiveMembership: false,
+        message: 'Error al obtener información de membresía del usuario',
+      };
+    }
+  }
+
+  async checkUserActiveMembership(
+    userIds: string[],
+  ): Promise<CheckUserActiveMembershipResponseDto> {
+    try {
+      // Buscar todas las membresías activas para los usuarios proporcionados
+      const activeMemberships = await this.membershipRepository.find({
+        where: {
+          userId: In(userIds),
+          status: MembershipStatus.ACTIVE,
+        },
+        select: ['userId'],
+      });
+
+      // Crear un Set de userIds que tienen membresía activa para búsqueda O(1)
+      const activeUserIds = new Set(
+        activeMemberships.map((membership) => membership.userId),
+      );
+
+      // Construir el array de resultados
+      const results: UserActiveMembershipResultDto[] = userIds.map(
+        (userId) => ({
+          userId,
+          active: activeUserIds.has(userId),
+        }),
+      );
+
+      return {
+        results,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Error checking active memberships for userIds ${userIds.join(', ')}: ${error.message}`,
+      );
+
+      // En caso de cualquier error, retornar false para todos los usuarios
+      const results: UserActiveMembershipResultDto[] = userIds.map(
+        (userId) => ({
+          userId,
+          active: false,
+        }),
+      );
+
+      return {
+        results,
+      };
+    }
   }
 }

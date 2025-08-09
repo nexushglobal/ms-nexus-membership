@@ -1,7 +1,9 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { FindByMembershipIdDto } from 'src/membership-reconsumption/dto/find-by-membership-id.dto';
+import { CheckUserActiveMembershipDto } from './dto/check-user-active-membership.dto';
 import { CreateSubscriptionPayload } from './dto/create-membership-subscription.dto';
+import { GetUserMembershipByUserIdDto } from './dto/get-user-membership-by-user-id.dto';
 import { MembershipHistoryService } from './services/membership-history.service';
 import { MembershipSubscriptionService } from './services/membership-subscription.service';
 import { MembershipService } from './services/membership.service';
@@ -33,5 +35,16 @@ export class MembershipController {
   @MessagePattern({ cmd: 'membership.createSubscription' })
   createSubscription(@Payload() data: CreateSubscriptionPayload) {
     return this.membershipSubscriptionService.createSubscription(data);
+  }
+
+  @MessagePattern({ cmd: 'membership.getUserMembershipByUserId' })
+  getUserMembershipByUserId(@Payload() data: GetUserMembershipByUserIdDto) {
+    return this.membershipService.getUserMembershipByUserId(data.userId);
+  }
+
+  @MessagePattern({ cmd: 'membership.checkUserActiveMembership' })
+  checkUserActiveMembership(@Payload() data: CheckUserActiveMembershipDto) {
+    const userIds = data.users.map((user) => user.userId);
+    return this.membershipService.checkUserActiveMembership(userIds);
   }
 }

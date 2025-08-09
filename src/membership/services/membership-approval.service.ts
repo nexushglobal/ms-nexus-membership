@@ -74,14 +74,11 @@ export class MembershipApprovalService {
       this.logger.log(`Membresía ${data.membershipId} aprobada exitosamente`);
 
       return {
-        success: true,
-        message: 'Membresía aprobada exitosamente',
-        data: {
-          membershipId: membership.id,
-          status: membership.status,
-          planName: membership.plan.name,
-          paymentId: data.paymentId,
-        },
+        membershipId: membership.id,
+        status: membership.status,
+        planName: membership.plan.name,
+        binaryPoints: membership.plan.binaryPoints,
+        paymentId: data.paymentId,
       };
     } catch (error) {
       await queryRunner.rollbackTransaction();
