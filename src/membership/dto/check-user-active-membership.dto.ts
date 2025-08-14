@@ -1,16 +1,9 @@
 import { Type } from 'class-transformer';
-import {
-  IsArray,
-  IsNotEmpty,
-  IsString,
-  IsUUID,
-  ValidateNested,
-} from 'class-validator';
+import { IsArray, IsNotEmpty, IsString, ValidateNested } from 'class-validator';
 
 export class UserIdDto {
   @IsNotEmpty()
   @IsString()
-  @IsUUID()
   userId: string;
 }
 
