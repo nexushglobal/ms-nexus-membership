@@ -1,16 +1,16 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import {
-  MembershipReconsumption,
-  ReconsumptionStatus,
-} from './entities/membership-reconsumption.entity';
-import { Repository } from 'typeorm';
-import { MembershipService } from 'src/membership/services/membership.service';
 import { BaseService } from 'src/common/services/base.service';
+import { MembershipService } from 'src/membership/services/membership.service';
+import { Repository } from 'typeorm';
 import {
   FindByMembershipIdDto,
   FindByMembershipIdResponseDto,
 } from './dto/find-by-membership-id.dto';
+import {
+  MembershipReconsumption,
+  ReconsumptionStatus,
+} from './entities/membership-reconsumption.entity';
 
 @Injectable()
 export class MembershipReconsumptionService extends BaseService<MembershipReconsumption> {
@@ -33,6 +33,7 @@ export class MembershipReconsumptionService extends BaseService<MembershipRecons
       .leftJoinAndSelect('reconsumption.membership', 'membership')
       .where('membership.id = :membershipId', { membershipId: membership.id })
       .orderBy('reconsumption.createdAt', 'DESC')
+
       .getMany();
     const pendingReconsumption =
       await this.membershipReconsumptionRepository.findOne({
@@ -50,11 +51,16 @@ export class MembershipReconsumptionService extends BaseService<MembershipRecons
       queryBuilder,
       paginationDto,
     );
+
     return {
       infoReconsumptions,
       canReconsume,
       autoRenewal,
       reconsumptionAmount,
+      membership: {
+        typeReconsumption: membership.typeReconsumption,
+        useCard: membership.useCard,
+      },
     };
   }
 

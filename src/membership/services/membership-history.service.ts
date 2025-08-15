@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { MembershipHistory } from '../entities/membership-history.entity';
-import { Repository } from 'typeorm';
-import { BaseService } from 'src/common/services/base.service';
-import { MembershipService } from './membership.service';
 import { Paginated } from 'src/common/dto/paginated.dto';
+import { BaseService } from 'src/common/services/base.service';
 import { FindByMembershipIdDto } from 'src/membership-reconsumption/dto/find-by-membership-id.dto';
+import { Repository } from 'typeorm';
+import { MembershipHistory } from '../entities/membership-history.entity';
+import { MembershipService } from './membership.service';
 
 @Injectable()
 export class MembershipHistoryService extends BaseService<MembershipHistory> {
@@ -26,6 +26,7 @@ export class MembershipHistoryService extends BaseService<MembershipHistory> {
       .leftJoinAndSelect('history.membership', 'membership')
       .where('membership.id = :membershipId', { membershipId: membership.id })
       .orderBy('history.createdAt', 'DESC')
+      .select(['history'])
       .getMany();
     return this.findAllBase(membershipHistory, paginationDto);
   }

@@ -1,11 +1,13 @@
 export class Paginated<T> {
   items: T[];
-  meta: PaginationMeta;
+  pagination: PaginationMeta;
 }
 
 export class PaginationMeta {
-  totalItems: number;
-  itemsPerPage: number;
+  page: number;
+  limit: number;
+  total: number;
   totalPages: number;
-  currentPage: number;
+  hasNext: boolean;
+  hasPrev: boolean;
 }

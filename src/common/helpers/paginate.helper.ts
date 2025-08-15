@@ -5,19 +5,24 @@ export const paginate = async <T>(
   data: T[],
   paginationDto: PaginationDto,
 ): Promise<Paginated<T>> => {
-  const { page = 1, limit = 5 } = paginationDto;
+  const { page = 1, limit = 10 } = paginationDto;
   const start = (page - 1) * limit;
   const end = start + limit;
   const paginatedItems = data.slice(start, end);
-  const totalItems = data.length;
-  const totalPages = Math.ceil(totalItems / limit);
+  const total = data.length;
+  const totalPages = Math.ceil(total / limit);
+  const hasNext = page < totalPages;
+  const hasPrev = page > 1;
+
   return {
     items: await Promise.all(paginatedItems),
-    meta: {
-      totalItems,
-      itemsPerPage: limit,
+    pagination: {
+      page,
+      limit,
+      total,
       totalPages,
-      currentPage: page,
+      hasNext,
+      hasPrev,
     },
   };
 };

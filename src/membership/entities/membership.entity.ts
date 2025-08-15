@@ -23,6 +23,13 @@ export enum MembershipStatus {
   SUSPENDED = 'SUSPENDED',
 }
 
+export enum TypeReconsumption {
+  POINTLOT = 'POINTLOT',
+  PRODUCT = 'PRODUCT',
+  SERVICE = 'SERVICE',
+  AUTOMATIC = 'AUTOMATIC',
+}
+
 @Entity('memberships')
 @Index(['userId', 'status'])
 @Index(['status', 'endDate'])
@@ -61,6 +68,17 @@ export class Membership {
     default: MembershipStatus.PENDING,
   })
   status: MembershipStatus;
+
+  @Column({
+    type: 'enum',
+    name: 'type_reconsumption',
+    enum: TypeReconsumption,
+    default: TypeReconsumption.AUTOMATIC,
+  })
+  typeReconsumption: TypeReconsumption;
+
+  @Column({ type: 'boolean', default: false })
+  useCard: boolean;
 
   @Column({
     type: 'decimal',

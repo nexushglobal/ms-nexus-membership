@@ -18,7 +18,6 @@ export class MembershipController {
 
   @MessagePattern({ cmd: 'membership.getMembershipDetail' })
   getMembershipDetail(@Payload('userId') userId: string) {
-    console.log('getMembershipDetail', userId);
     return this.membershipService.getMembershipDetail(userId);
   }
 

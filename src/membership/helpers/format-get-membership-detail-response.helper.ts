@@ -10,36 +10,27 @@ export const formatGetMembershipDetailResponse = (
 ): GetMembershipDetailResponseDto => {
   return {
     membership: {
-      id: membership.id,
       status: membership.status,
       startDate: membership.startDate,
       endDate: membership.endDate,
-      autoRenewal: membership.autoRenewal,
       paidAmount: membership.plan.price,
-      metadata: membership.metadata ? membership.metadata : {},
       plan: {
-        id: membership.plan.id,
         name: membership.plan.name,
         price: membership.plan.price,
-        binaryPoints: membership.plan.binaryPoints,
-        checkAmount: membership.plan.checkAmount,
+        directCommissionAmount: membership.plan.directCommissionAmount,
         commissionPercentage: membership.plan.commissionPercentage,
       },
     },
     lastReconsumption: lastReconsumption
       ? {
-          id: lastReconsumption.id,
           amount: lastReconsumption.amount,
-          status: lastReconsumption.status,
           periodDate: lastReconsumption.periodDate,
           createdAt: lastReconsumption.createdAt,
         }
       : null,
     pendingReconsumption: pendingReconsumption
       ? {
-          id: pendingReconsumption.id,
           amount: pendingReconsumption.amount,
-          status: pendingReconsumption.status,
           periodDate: pendingReconsumption.periodDate,
           createdAt: pendingReconsumption.createdAt,
         }
