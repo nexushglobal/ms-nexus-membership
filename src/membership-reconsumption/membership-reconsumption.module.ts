@@ -1,17 +1,33 @@
 import { forwardRef, Module } from '@nestjs/common';
-import { MembershipReconsumptionService } from './membership-reconsumption.service';
-import { MembershipReconsumptionController } from './membership-reconsumption.controller';
-import { MembershipReconsumption } from './entities/membership-reconsumption.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { MembershipHistory } from 'src/membership/entities/membership-history.entity';
+import { Membership } from 'src/membership/entities/membership.entity';
 import { MembershipModule } from 'src/membership/membership.module';
+import { MembershipReconsumption } from './entities/membership-reconsumption.entity';
+import { MembershipReconsumptionController } from './membership-reconsumption.controller';
+import { MembershipReconsumptionService } from './membership-reconsumption.service';
+import { MembershipReconsumptionApprovalService } from './services/membership-reconsumption-approval.service';
+import { PaymentGatewayReconsumptionService } from './services/payment-gateway-reconsumption.service';
+import { PointsReconsumptionService } from './services/points-reconsumption.service';
+import { VoucherReconsumptionService } from './services/voucher-reconsumption.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([MembershipReconsumption]),
+    TypeOrmModule.forFeature([
+      MembershipReconsumption,
+      Membership,
+      MembershipHistory,
+    ]),
     forwardRef(() => MembershipModule),
   ],
   controllers: [MembershipReconsumptionController],
-  providers: [MembershipReconsumptionService],
+  providers: [
+    MembershipReconsumptionService,
+    MembershipReconsumptionApprovalService,
+    VoucherReconsumptionService,
+    PointsReconsumptionService,
+    PaymentGatewayReconsumptionService,
+  ],
   exports: [MembershipReconsumptionService, TypeOrmModule],
 })
 export class MembershipReconsumptionModule {}

@@ -113,8 +113,12 @@ export class MembershipApprovalService {
           message: 'Membresía no encontrada',
         });
       }
+      console.log('Membership encontrada:', membership);
 
-      const previousPlan = membership.plan;
+      const previousPlan = await this.membershipPlanRepository.findOne({
+        where: { id: membership.fromPlanId },
+      });
+      console.log('Plan anterior:', previousPlan);
 
       membership.status = MembershipStatus.ACTIVE;
       await queryRunner.manager.save(Membership, membership);
@@ -127,12 +131,12 @@ export class MembershipApprovalService {
         metadata: {
           'ID de Pago': data.paymentId,
           'Monto del Upgrade': data.upgradeAmount,
-          'Plan Anterior': previousPlan.name,
+          'Plan Anterior': previousPlan?.name || 'Desconocido',
           'Plan Actual': membership.plan.name,
           'Estado de la Membresía': 'APROBADA',
           'Fecha de Aprobación': date.toLocaleDateString('es-ES'),
           'Hora de Aprobación': date.toLocaleTimeString('es-ES'),
-          Descripción: `Upgrade exitoso de ${previousPlan.name} a ${membership.plan.name}`,
+          Descripción: `Upgrade exitoso de ${previousPlan?.name || 'Desconocido'} a ${membership.plan.name}`,
           'Costo del Upgrade': `$${data.upgradeAmount}`,
         },
       });
@@ -144,18 +148,20 @@ export class MembershipApprovalService {
       this.logger.log(
         `Upgrade de plan aprobado para membresía ${data.membershipId}`,
       );
-
+      let binaryPoints =
+        (previousPlan?.binaryPoints || 0) - membership.plan.binaryPoints;
+      console.log(`Puntos binarios calculados: ${binaryPoints}`);
+      if (binaryPoints <= 0) {
+        binaryPoints = membership.plan.binaryPoints;
+        console.log(`Puntos binarios ajustados: ${binaryPoints}`);
+      }
       return {
-        success: true,
-        message: 'Upgrade de plan aprobado exitosamente',
-        data: {
-          membershipId: membership.id,
-          status: membership.status,
-          planName: membership.plan.name,
-          previousPlan: previousPlan.name,
-          paymentId: data.paymentId,
-          upgradeAmount: data.upgradeAmount,
-        },
+        membershipId: membership.id,
+        status: membership.status,
+        planName: membership.plan.name,
+        binaryPoints: binaryPoints,
+        fromPlanName: previousPlan?.name || 'Desconocido',
+        paymentId: data.paymentId,
       };
     } catch (error) {
       await queryRunner.rollbackTransaction();
