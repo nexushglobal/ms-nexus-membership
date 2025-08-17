@@ -119,7 +119,7 @@ export class MembershipReconsumptionApprovalService {
         newStartDate,
         newEndDate,
         minReconsumptionAmount: membership.minimumReconsumptionAmount,
-        isPointLLot: membership.isPointLLot,
+        isPointLot: membership.isPointLot,
       };
     } catch (error) {
       await queryRunner.rollbackTransaction();

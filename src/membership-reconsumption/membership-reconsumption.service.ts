@@ -72,12 +72,15 @@ export class MembershipReconsumptionService extends BaseService<MembershipRecons
 
     return {
       infoReconsumptions,
-      canReconsume,
-      autoRenewal,
-      reconsumptionAmount,
       membership: {
-        // typeReconsumption: membership.typeReconsumption,
         useCard: membership.useCard,
+        isPointLot: membership.isPointLot,
+        status: membership.status,
+        canReconsume,
+        autoRenewal,
+        reconsumptionAmount,
+        startDate: membership.startDate,
+        endDate: membership.endDate,
       },
     };
   }

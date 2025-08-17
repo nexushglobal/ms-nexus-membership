@@ -16,6 +16,10 @@ import {
 } from '../dto/check-user-active-membership.dto';
 import { GetMembershipDetailResponseDto } from '../dto/get-membership-detail.dto';
 import { GetUserMembershipByUserIdResponseDto } from '../dto/get-user-membership-by-user-id.dto';
+import {
+  UpdateMembershipDto,
+  UpdateMembershipResponseDto,
+} from '../dto/update-membership.dto';
 import { UserMembershipInfoDto } from '../dto/user-membership-info.dto';
 import { Membership, MembershipStatus } from '../entities/membership.entity';
 import { formatGetMembershipDetailResponse } from '../helpers/format-get-membership-detail-response.helper';
@@ -116,9 +120,6 @@ export class MembershipService extends BaseService<Membership> {
       .createQueryBuilder('membership')
       .leftJoinAndSelect('membership.plan', 'plan')
       .where('membership.userId = :userId', { userId })
-      .andWhere('membership.status = :status', {
-        status: MembershipStatus.ACTIVE,
-      })
       .getOne();
     if (!membership)
       throw new RpcException({
@@ -232,6 +233,78 @@ export class MembershipService extends BaseService<Membership> {
       return {
         results,
       };
+    }
+  }
+
+  async updateMembership(
+    data: UpdateMembershipDto,
+  ): Promise<UpdateMembershipResponseDto> {
+    const { userId, isPointLot, useCard, autoRenewal } = data;
+
+    try {
+      // Buscar la membresía activa del usuario
+      const membership = await this.membershipRepository.findOne({
+        where: {
+          userId,
+        },
+      });
+
+      if (!membership) {
+        throw new RpcException(
+          'El usuario no tiene una membresía activa para actualizar',
+        );
+      }
+
+      // Actualizar solo los campos proporcionados
+      const updateData: Partial<Membership> = {};
+
+      if (isPointLot !== undefined) {
+        updateData.isPointLot = isPointLot;
+      }
+
+      if (useCard !== undefined) {
+        updateData.useCard = useCard;
+      }
+
+      if (autoRenewal !== undefined) {
+        updateData.autoRenewal = autoRenewal;
+      }
+
+      // Si no hay campos para actualizar
+      if (Object.keys(updateData).length === 0) {
+        throw new RpcException(
+          'No se proporcionaron campos válidos para actualizar',
+        );
+      }
+
+      // Realizar la actualización
+      await this.membershipRepository.update(membership.id, updateData);
+
+      // Obtener la membresía actualizada
+      const updatedMembership = await this.membershipRepository.findOne({
+        where: { id: membership.id },
+      });
+      if (!updatedMembership) {
+        throw new RpcException('Error al obtener la membresía actualizada');
+      }
+
+      this.logger.log(
+        `Membresía actualizada para usuario ${userId}: ${JSON.stringify(updateData)}`,
+      );
+
+      return {
+        id: updatedMembership.id,
+        userId: updatedMembership.userId,
+        isPointLot: updatedMembership.isPointLot,
+        useCard: updatedMembership.useCard,
+        autoRenewal: updatedMembership.autoRenewal,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Error actualizando membresía para usuario ${userId}: ${error.message}`,
+      );
+
+      throw new RpcException('Error interno al actualizar la membresía');
     }
   }
 }

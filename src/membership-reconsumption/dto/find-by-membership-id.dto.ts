@@ -1,6 +1,7 @@
 import { IsNotEmpty, IsString } from 'class-validator';
 import { Paginated } from 'src/common/dto/paginated.dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { MembershipStatus } from 'src/membership/entities/membership.entity';
 import { MembershipReconsumption } from '../entities/membership-reconsumption.entity';
 
 export class FindByMembershipIdDto extends PaginationDto {
@@ -11,11 +12,15 @@ export class FindByMembershipIdDto extends PaginationDto {
 
 export class FindByMembershipIdResponseDto {
   infoReconsumptions: Paginated<MembershipReconsumption>;
-  canReconsume: boolean;
-  autoRenewal: boolean;
-  reconsumptionAmount: number;
+
   membership: {
-    // typeReconsumption: TypeReconsumption;
     useCard: boolean;
+    isPointLot: boolean;
+    status: MembershipStatus;
+    canReconsume: boolean;
+    autoRenewal: boolean;
+    reconsumptionAmount: number;
+    startDate: Date;
+    endDate: Date;
   };
 }

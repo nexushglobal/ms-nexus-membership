@@ -4,6 +4,7 @@ import { FindByMembershipIdDto } from 'src/membership-reconsumption/dto/find-by-
 import { CheckUserActiveMembershipDto } from './dto/check-user-active-membership.dto';
 import { CreateSubscriptionPayload } from './dto/create-membership-subscription.dto';
 import { GetUserMembershipByUserIdDto } from './dto/get-user-membership-by-user-id.dto';
+import { UpdateMembershipDto } from './dto/update-membership.dto';
 import { MembershipHistoryService } from './services/membership-history.service';
 import { MembershipSubscriptionService } from './services/membership-subscription.service';
 import { MembershipService } from './services/membership.service';
@@ -45,5 +46,10 @@ export class MembershipController {
   checkUserActiveMembership(@Payload() data: CheckUserActiveMembershipDto) {
     const userIds = data.users.map((user) => user.userId);
     return this.membershipService.checkUserActiveMembership(userIds);
+  }
+
+  @MessagePattern({ cmd: 'membership.updateMembership' })
+  updateMembership(@Payload() data: UpdateMembershipDto) {
+    return this.membershipService.updateMembership(data);
   }
 }

@@ -66,7 +66,7 @@ export class Membership {
   useCard: boolean;
 
   @Column({ type: 'boolean', default: false })
-  isPointLLot: boolean;
+  isPointLot: boolean;
 
   @Column({
     type: 'decimal',

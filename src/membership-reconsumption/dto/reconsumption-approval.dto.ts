@@ -10,7 +10,7 @@ export interface ApproveReconsumptionResponseDto {
   newStartDate: Date;
   newEndDate: Date;
   minReconsumptionAmount: number;
-  isPointLLot: boolean;
+  isPointLot: boolean;
 }
 
 export interface RejectReconsumptionDto {
