@@ -35,7 +35,10 @@ export class PaymentGatewayReconsumptionService extends BaseReconsumptionService
       const userInfo = await this.getUserInfo(userId);
 
       // 2. Obtener la membresía del usuario
-      const membership = await this.getUserMembership(userId);
+      const membership = await this.getUserMembership(
+        userId,
+        createDto.membershipId,
+      );
 
       // 3. El monto debe ser igual al mínimo de reconsumo
       const amount = membership.minimumReconsumptionAmount;

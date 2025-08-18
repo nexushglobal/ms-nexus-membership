@@ -14,6 +14,7 @@ export class FindByMembershipIdResponseDto {
   infoReconsumptions: Paginated<MembershipReconsumption>;
 
   membership: {
+    membershipId: number;
     useCard: boolean;
     isPointLot: boolean;
     status: MembershipStatus;

@@ -37,7 +37,10 @@ export class VoucherReconsumptionService extends BaseReconsumptionService {
       const userInfo = await this.getUserInfo(userId);
 
       // 2. Obtener la membresía del usuario
-      const membership = await this.getUserMembership(userId);
+      const membership = await this.getUserMembership(
+        userId,
+        createDto.membershipId,
+      );
 
       // 3. Validar que el monto total sea igual al mínimo de reconsumo
       const totalAmount =
@@ -91,7 +94,7 @@ export class VoucherReconsumptionService extends BaseReconsumptionService {
 
         return {
           reconsumption,
-          payment,
+          paymentId: payment.paymentId || '',
           totalAmount,
         };
       } catch (paymentError) {

@@ -23,7 +23,7 @@ export class MembershipReconsumptionController {
     return this.membershipReconsumptionService.findByMembershipId(data);
   }
 
-  @MessagePattern({ cmd: 'membership.createReconsumption' })
+  @MessagePattern({ cmd: 'membership.createReConsumption' })
   createReconsumption(@Payload() data: CreateReconsumptionPayload) {
     return this.membershipReconsumptionService.createReconsumption(data);
   }

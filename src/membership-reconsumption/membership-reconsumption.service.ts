@@ -73,6 +73,7 @@ export class MembershipReconsumptionService extends BaseService<MembershipRecons
     return {
       infoReconsumptions,
       membership: {
+        membershipId: membership.id,
         useCard: membership.useCard,
         isPointLot: membership.isPointLot,
         status: membership.status,

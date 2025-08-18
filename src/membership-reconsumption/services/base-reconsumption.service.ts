@@ -87,9 +87,12 @@ export abstract class BaseReconsumptionService {
   /**
    * Obtiene la membresía activa del usuario
    */
-  protected async getUserMembership(userId: string): Promise<Membership> {
+  protected async getUserMembership(
+    userId: string,
+    membershipId: number,
+  ): Promise<Membership> {
     const membership = await this.membershipRepository.findOne({
-      where: { userId },
+      where: { userId, id: membershipId },
       relations: ['plan'],
       order: { createdAt: 'DESC' },
     });
