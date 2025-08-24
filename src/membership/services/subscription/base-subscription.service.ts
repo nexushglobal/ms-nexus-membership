@@ -105,10 +105,14 @@ export abstract class BaseSubscriptionService {
     const currentPrice = currentMembership.plan.price;
     const newPrice = newPlan.price;
 
+    this.logger.log(
+      `Comparando precios - Actual: ${currentPrice} (Plan ID: ${currentMembership.plan.id}), Nuevo: ${newPrice} (Plan ID: ${newPlan.id})`,
+    );
+
     if (newPrice < currentPrice) {
       throw new RpcException({
         status: HttpStatus.BAD_REQUEST,
-        message: 'No puedes cambiar a un plan de menor valor',
+        message: `No puedes cambiar a un plan de menor valor. Plan actual: $${currentPrice}, Plan solicitado: $${newPrice}`,
       });
     }
 

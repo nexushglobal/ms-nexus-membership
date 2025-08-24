@@ -1,5 +1,6 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { CommonModule } from 'src/common/common.module';
 import { MembershipHistory } from 'src/membership/entities/membership-history.entity';
 import { Membership } from 'src/membership/entities/membership.entity';
 import { MembershipModule } from 'src/membership/membership.module';
@@ -19,6 +20,7 @@ import { VoucherReconsumptionService } from './services/voucher-reconsumption.se
       MembershipHistory,
     ]),
     forwardRef(() => MembershipModule),
+    CommonModule,
   ],
   controllers: [MembershipReconsumptionController],
   providers: [

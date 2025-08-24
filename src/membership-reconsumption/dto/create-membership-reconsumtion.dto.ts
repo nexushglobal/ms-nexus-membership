@@ -11,6 +11,7 @@ export interface PaymentDetailDto {
 export interface CreateReconsumptionDto {
   paymentMethod: PaymentMethod;
   membershipId: number;
+  amount: number;
   payments?: PaymentDetailDto[];
   source_id?: string;
 }

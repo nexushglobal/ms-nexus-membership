@@ -74,8 +74,13 @@ export class MembershipSubscriptionService {
             message: 'Método de pago no soportado',
           });
       }
-    } catch {
-      this.logger.error(`Error al crear suscripción`);
+    } catch (error) {
+      this.logger.error(`Error al crear suscripción: ${error.message}`);
+      // Si ya es un RpcException, re-lanzarlo tal como está
+      if (error instanceof RpcException) {
+        throw error;
+      }
+      // Para cualquier otro tipo de error, crear uno genérico
       throw new RpcException({
         status: HttpStatus.INTERNAL_SERVER_ERROR,
         message: 'Error al procesar la suscripción',
