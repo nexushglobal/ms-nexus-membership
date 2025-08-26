@@ -307,4 +307,76 @@ export class MembershipService extends BaseService<Membership> {
       throw new RpcException('Error interno al actualizar la membresía');
     }
   }
+
+  async getUsersMembershipBatch(
+    userIds: string[],
+  ): Promise<{ [userId: string]: GetUserMembershipByUserIdResponseDto }> {
+    try {
+      this.logger.log(
+        `Getting memberships for ${userIds.length} users in batch`,
+      );
+
+      if (userIds.length === 0) {
+        return {};
+      }
+
+      // Buscar todas las membresías activas para los usuarios proporcionados
+      const memberships = await this.membershipRepository.find({
+        where: {
+          userId: In(userIds),
+          status: MembershipStatus.ACTIVE,
+        },
+        relations: ['plan'],
+      });
+
+      // Crear un mapa de resultados
+      const result: { [userId: string]: GetUserMembershipByUserIdResponseDto } = {};
+
+      // Inicializar todos los usuarios con membresía no activa
+      userIds.forEach(userId => {
+        result[userId] = {
+          hasActiveMembership: false,
+          message: 'El usuario no tiene membresía activa',
+        };
+      });
+
+      // Llenar los datos encontrados
+      memberships.forEach(membership => {
+        result[membership.userId] = {
+          hasActiveMembership: true,
+          id: membership.id,
+          userId: membership.userId,
+          userName: membership.userName,
+          userEmail: membership.userEmail,
+          plan: {
+            id: membership.plan.id,
+            name: membership.plan.name,
+            commissionPercentage: membership.plan.commissionPercentage,
+            directCommissionAmount: membership.plan.directCommissionAmount,
+          },
+        };
+      });
+
+      this.logger.log(
+        `Processed ${memberships.length} active memberships out of ${userIds.length} requested users`,
+      );
+
+      return result;
+    } catch (error) {
+      this.logger.error(
+        `Error getting user memberships in batch: ${error.message}`,
+      );
+
+      // En caso de error, retornar objeto con usuarios sin membresía activa
+      const result: { [userId: string]: GetUserMembershipByUserIdResponseDto } = {};
+      userIds.forEach(userId => {
+        result[userId] = {
+          hasActiveMembership: false,
+          message: 'Error al obtener información de membresía del usuario',
+        };
+      });
+
+      return result;
+    }
+  }
 }

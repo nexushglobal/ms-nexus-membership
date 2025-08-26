@@ -52,4 +52,9 @@ export class MembershipController {
   updateMembership(@Payload() data: UpdateMembershipDto) {
     return this.membershipService.updateMembership(data);
   }
+
+  @MessagePattern({ cmd: 'membership.getUsersMembershipBatch' })
+  getUsersMembershipBatch(@Payload() data: { userIds: string[] }) {
+    return this.membershipService.getUsersMembershipBatch(data.userIds);
+  }
 }
