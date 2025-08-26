@@ -55,7 +55,7 @@ export class MembershipApprovalService {
       const historyEntry = this.membershipHistoryRepository.create({
         membership: membership,
         action: MembershipAction.PAYMENT_RECEIVED,
-        notes: `Pago ID ${data.paymentId} aprobado exitosamente`,
+        notes: `Pago de membresía aprobado exitosamente`,
         metadata: {
           'ID de Pago': data.paymentId,
           'Monto del Pago': data.amount,
@@ -149,7 +149,7 @@ export class MembershipApprovalService {
         `Upgrade de plan aprobado para membresía ${data.membershipId}`,
       );
       let binaryPoints =
-        (previousPlan?.binaryPoints || 0) - membership.plan.binaryPoints;
+        membership.plan.binaryPoints - (previousPlan?.binaryPoints || 0);
       console.log(`Puntos binarios calculados: ${binaryPoints}`);
       if (binaryPoints <= 0) {
         binaryPoints = membership.plan.binaryPoints;

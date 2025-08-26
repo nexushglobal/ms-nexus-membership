@@ -230,6 +230,7 @@ export abstract class BaseSubscriptionService {
     membershipId: number,
     action: MembershipAction,
     details?: string,
+    notes?: string,
   ): Promise<void> {
     const history = this.membershipHistoryRepository.create({
       membership: {
@@ -239,6 +240,7 @@ export abstract class BaseSubscriptionService {
       metadata: {
         details,
       },
+      notes,
     });
 
     await this.membershipHistoryRepository.save(history);
