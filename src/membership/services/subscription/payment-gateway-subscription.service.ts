@@ -90,6 +90,7 @@ export class PaymentGatewaySubscriptionService extends BaseSubscriptionService {
         isUpgrade
           ? `Upgrade de plan ${currentMembership?.plan.name} a ${newMembership.plan.name}`
           : `Compra de plan ${newMembership.plan.name}`,
+        'Suscripción creada con metodo pasarela de pago',
       );
 
       // 6. Configurar pago

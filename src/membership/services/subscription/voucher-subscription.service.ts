@@ -93,6 +93,7 @@ export class VoucherSubscriptionService extends BaseSubscriptionService {
         isUpgrade
           ? `Upgrade de plan ${currentMembership?.plan.name} a ${newMembership.plan.name}`
           : `Compra de plan ${newMembership.plan.name}`,
+        'Suscripción creada con metodo VOUCHER',
       );
 
       // 6. Configurar pago
