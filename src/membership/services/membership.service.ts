@@ -8,6 +8,7 @@ import {
 import { RpcException } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BaseService } from 'src/common/services/base.service';
+import { UserService } from 'src/common/services/user.service';
 import { MembershipReconsumptionService } from 'src/membership-reconsumption/membership-reconsumption.service';
 import { In, Repository } from 'typeorm';
 import {
@@ -15,6 +16,7 @@ import {
   UserActiveMembershipResultDto,
 } from '../dto/check-user-active-membership.dto';
 import { GetMembershipDetailResponseDto } from '../dto/get-membership-detail.dto';
+import { MembershipSubscriptionData } from '../dto/get-subscriptions-report.dto';
 import { GetUserMembershipByUserIdResponseDto } from '../dto/get-user-membership-by-user-id.dto';
 import {
   UpdateMembershipDto,
@@ -32,6 +34,7 @@ export class MembershipService extends BaseService<Membership> {
     private readonly membershipRepository: Repository<Membership>,
     @Inject(forwardRef(() => MembershipReconsumptionService))
     private readonly membershipReconsumptionService: MembershipReconsumptionService,
+    private readonly userService: UserService,
   ) {
     super(membershipRepository);
   }
@@ -330,10 +333,11 @@ export class MembershipService extends BaseService<Membership> {
       });
 
       // Crear un mapa de resultados
-      const result: { [userId: string]: GetUserMembershipByUserIdResponseDto } = {};
+      const result: { [userId: string]: GetUserMembershipByUserIdResponseDto } =
+        {};
 
       // Inicializar todos los usuarios con membresía no activa
-      userIds.forEach(userId => {
+      userIds.forEach((userId) => {
         result[userId] = {
           hasActiveMembership: false,
           message: 'El usuario no tiene membresía activa',
@@ -341,7 +345,7 @@ export class MembershipService extends BaseService<Membership> {
       });
 
       // Llenar los datos encontrados
-      memberships.forEach(membership => {
+      memberships.forEach((membership) => {
         result[membership.userId] = {
           hasActiveMembership: true,
           id: membership.id,
@@ -368,8 +372,9 @@ export class MembershipService extends BaseService<Membership> {
       );
 
       // En caso de error, retornar objeto con usuarios sin membresía activa
-      const result: { [userId: string]: GetUserMembershipByUserIdResponseDto } = {};
-      userIds.forEach(userId => {
+      const result: { [userId: string]: GetUserMembershipByUserIdResponseDto } =
+        {};
+      userIds.forEach((userId) => {
         result[userId] = {
           hasActiveMembership: false,
           message: 'Error al obtener información de membresía del usuario',
@@ -378,5 +383,92 @@ export class MembershipService extends BaseService<Membership> {
 
       return result;
     }
+  }
+
+  async getSubscriptionsReport(
+    startDate?: string,
+    endDate?: string,
+  ): Promise<MembershipSubscriptionData[]> {
+    try {
+      const queryBuilder = this.membershipRepository
+        .createQueryBuilder('membership')
+        .leftJoinAndSelect('membership.plan', 'plan')
+        .where('membership.status = :status', {
+          status: MembershipStatus.ACTIVE,
+        })
+        .orderBy('membership.createdAt', 'DESC');
+
+      // Aplicar filtros de fecha si se proporcionan
+      if (startDate && endDate) {
+        queryBuilder.andWhere(
+          'membership.createdAt BETWEEN :startDate AND :endDate',
+          {
+            startDate: new Date(startDate),
+            endDate: new Date(endDate + 'T23:59:59.999Z'), // Final del día
+          },
+        );
+      } else if (startDate) {
+        queryBuilder.andWhere('membership.createdAt >= :startDate', {
+          startDate: new Date(startDate),
+        });
+      } else if (endDate) {
+        queryBuilder.andWhere('membership.createdAt <= :endDate', {
+          endDate: new Date(endDate + 'T23:59:59.999Z'),
+        });
+      }
+
+      const memberships = await queryBuilder.getMany();
+
+      if (memberships.length === 0) {
+        return [];
+      }
+
+      // Obtener información de contacto de usuarios
+      const userIds = memberships.map((m) => m.userId);
+      const usersContactInfo =
+        await this.userService.getUsersContactInfo(userIds);
+
+      // Crear un mapa para acceso rápido a la información de contacto
+      const contactInfoMap = new Map(
+        usersContactInfo.map((user) => [user.userId, user]),
+      );
+
+      return memberships.map((membership) => {
+        const contactInfo = contactInfoMap.get(membership.userId);
+        
+        // Usar SOLO la información de contacto de la DB, no los métodos de extracción incorrectos
+        const firstName = contactInfo?.firstName || '';
+        const lastName = contactInfo?.lastName || '';
+        const fullName = contactInfo?.fullName || 
+          membership.userName || 
+          (firstName && lastName ? `${firstName} ${lastName}`.trim() : '');
+
+        return {
+          id: membership.id,
+          planName: membership.plan?.name || 'N/A',
+          email: membership.userEmail,
+          firstName: firstName,
+          lastName: lastName,
+          fullName: fullName,
+          phone: contactInfo?.phone || '',
+          created: membership.createdAt,
+        };
+      });
+    } catch (error) {
+      this.logger.error('Error generando reporte de suscripciones:', error);
+      throw error;
+    }
+  }
+
+  private extractFirstName(fullName: string): string {
+    if (!fullName) return '';
+    const nameParts = fullName.trim().split(' ');
+    return nameParts[0] || '';
+  }
+
+  private extractLastName(fullName: string): string {
+    if (!fullName) return '';
+    const nameParts = fullName.trim().split(' ');
+    return nameParts.slice(1).join(' ') || '';
   }
 }

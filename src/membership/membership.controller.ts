@@ -3,6 +3,7 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
 import { FindByMembershipIdDto } from 'src/membership-reconsumption/dto/find-by-membership-id.dto';
 import { CheckUserActiveMembershipDto } from './dto/check-user-active-membership.dto';
 import { CreateSubscriptionPayload } from './dto/create-membership-subscription.dto';
+import { GetSubscriptionsReportDto } from './dto/get-subscriptions-report.dto';
 import { GetUserMembershipByUserIdDto } from './dto/get-user-membership-by-user-id.dto';
 import { UpdateMembershipDto } from './dto/update-membership.dto';
 import { MembershipHistoryService } from './services/membership-history.service';
@@ -56,5 +57,13 @@ export class MembershipController {
   @MessagePattern({ cmd: 'membership.getUsersMembershipBatch' })
   getUsersMembershipBatch(@Payload() data: { userIds: string[] }) {
     return this.membershipService.getUsersMembershipBatch(data.userIds);
+  }
+
+  @MessagePattern({ cmd: 'membership.getSubscriptionsReport' })
+  getSubscriptionsReport(@Payload() data: GetSubscriptionsReportDto) {
+    return this.membershipService.getSubscriptionsReport(
+      data.startDate,
+      data.endDate,
+    );
   }
 }

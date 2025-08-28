@@ -1,6 +1,7 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CommonModule } from 'src/common/common.module';
+import { UserService } from 'src/common/services/user.service';
 import { MembershipPlan } from 'src/membership-plan/entities/membership-plan.entity';
 import { MembershipReconsumptionModule } from 'src/membership-reconsumption/membership-reconsumption.module';
 import { MembershipApprovalController } from './controllers/membership-approval.controller';
@@ -33,6 +34,7 @@ import { VoucherSubscriptionService } from './services/subscription/voucher-subs
     PaymentGatewaySubscriptionService,
     MembershipApprovalService,
     UserMembershipStatusService,
+    UserService,
   ],
   exports: [
     MembershipService,
