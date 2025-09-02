@@ -18,6 +18,8 @@ import {
 import { GetMembershipDetailResponseDto } from '../dto/get-membership-detail.dto';
 import { MembershipSubscriptionData } from '../dto/get-subscriptions-report.dto';
 import { GetUserMembershipByUserIdResponseDto } from '../dto/get-user-membership-by-user-id.dto';
+import { UpdateMembershipEndDateResponseDto } from '../dto/update-membership-end-date.dto';
+import { UpdateMembershipStatusResponseDto } from '../dto/update-membership-status.dto';
 import {
   UpdateMembershipDto,
   UpdateMembershipResponseDto,
@@ -116,6 +118,18 @@ export class MembershipService extends BaseService<Membership> {
       pendingReconsumption,
       canReconsume,
     );
+  }
+
+  async findOneById(membershipId: number): Promise<Membership> {
+    const membership = await this.membershipRepository.findOne({
+      where: { id: membershipId },
+    });
+    if (!membership)
+      throw new RpcException({
+        status: HttpStatus.NOT_FOUND,
+        message: 'No se encontró la membresía',
+      });
+    return membership;
   }
 
   async findOneByUserId(userId: string): Promise<Membership> {
@@ -435,12 +449,13 @@ export class MembershipService extends BaseService<Membership> {
 
       return memberships.map((membership) => {
         const contactInfo = contactInfoMap.get(membership.userId);
-        
+
         // Usar SOLO la información de contacto de la DB, no los métodos de extracción incorrectos
         const firstName = contactInfo?.firstName || '';
         const lastName = contactInfo?.lastName || '';
-        const fullName = contactInfo?.fullName || 
-          membership.userName || 
+        const fullName =
+          contactInfo?.fullName ||
+          membership.userName ||
           (firstName && lastName ? `${firstName} ${lastName}`.trim() : '');
 
         return {
@@ -460,15 +475,218 @@ export class MembershipService extends BaseService<Membership> {
     }
   }
 
-  private extractFirstName(fullName: string): string {
-    if (!fullName) return '';
-    const nameParts = fullName.trim().split(' ');
-    return nameParts[0] || '';
+  async findExpiredMemberships(currentDate: string) {
+    try {
+      const queryBuilder = this.membershipRepository
+        .createQueryBuilder('membership')
+        .leftJoinAndSelect('membership.plan', 'plan')
+        .where('membership.endDate < :currentDate', { currentDate })
+        .andWhere('membership.status IN (:...statuses)', {
+          statuses: [MembershipStatus.ACTIVE, MembershipStatus.EXPIRED],
+        })
+        .orderBy('membership.endDate', 'ASC');
+
+      const expiredMemberships = await queryBuilder.getMany();
+
+      return expiredMemberships.map((membership) => ({
+        id: membership.id,
+        userId: membership.userId,
+        userEmail: membership.userEmail,
+        userName: membership.userName,
+        isPointLot: membership.isPointLot,
+        autoRenewal: membership.autoRenewal,
+        minimumReconsumptionAmount: membership.minimumReconsumptionAmount,
+        startDate: membership.startDate,
+        endDate: membership.endDate,
+        plan: membership.plan
+          ? {
+              id: membership.plan.id,
+              name: membership.plan.name,
+              binaryPoints: membership.plan.binaryPoints,
+            }
+          : undefined,
+      }));
+    } catch (error) {
+      this.logger.error('Error finding expired memberships:', error);
+      throw error;
+    }
   }
 
-  private extractLastName(fullName: string): string {
-    if (!fullName) return '';
-    const nameParts = fullName.trim().split(' ');
-    return nameParts.slice(1).join(' ') || '';
+  async updateMembershipEndDate(
+    membershipId: string,
+    endDate: string,
+  ): Promise<UpdateMembershipEndDateResponseDto> {
+    try {
+      // Buscar la membresía por ID
+      const membership = await this.membershipRepository.findOne({
+        where: { id: parseInt(membershipId) },
+      });
+
+      if (!membership) {
+        throw new RpcException({
+          status: HttpStatus.NOT_FOUND,
+          message: `No se encontró membresía con ID ${membershipId}`,
+        });
+      }
+
+      // Convertir string a Date
+      const newEndDate = new Date(endDate);
+      // Validar que la fecha sea válida
+      if (isNaN(newEndDate.getTime())) {
+        throw new RpcException({
+          status: HttpStatus.BAD_REQUEST,
+          message: 'Fecha de finalización inválida',
+        });
+      }
+
+      // Actualizar solo el campo endDate
+      await this.membershipRepository.update(membership.id, {
+        endDate: newEndDate,
+      });
+
+      this.logger.log(
+        `Fecha de finalización de membresía actualizada - ID: ${membershipId}, Nueva fecha: ${endDate}`,
+      );
+
+      return {
+        id: membership.id,
+        endDate: newEndDate,
+        message: 'Fecha de finalización de membresía actualizada exitosamente',
+      };
+    } catch (error) {
+      this.logger.error(
+        `Error actualizando fecha de finalización de membresía ${membershipId}: ${error.message}`,
+      );
+
+      if (error instanceof RpcException) {
+        throw error;
+      }
+
+      throw new RpcException({
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message:
+          'Error interno al actualizar fecha de finalización de membresía',
+      });
+    }
+  }
+
+  async updateMembershipStatus(
+    membershipId: string,
+    status: string,
+  ): Promise<UpdateMembershipStatusResponseDto> {
+    try {
+      // Buscar la membresía por ID
+      const membership = await this.membershipRepository.findOne({
+        where: { id: parseInt(membershipId) },
+      });
+
+      if (!membership) {
+        throw new RpcException({
+          status: HttpStatus.NOT_FOUND,
+          message: `No se encontró membresía con ID ${membershipId}`,
+        });
+      }
+      // Validar que el status sea válido
+      if (
+        !Object.values(MembershipStatus).includes(status as MembershipStatus)
+      ) {
+        throw new RpcException({
+          status: HttpStatus.BAD_REQUEST,
+          message: `Estado de membresía inválido: ${status}`,
+        });
+      }
+
+      const newStatus = status as MembershipStatus;
+
+      // Actualizar solo el campo status
+      await this.membershipRepository.update(membership.id, {
+        status: newStatus,
+      });
+
+      this.logger.log(
+        `Estado de membresía actualizado - ID: ${membershipId}, Nuevo estado: ${status}`,
+      );
+
+      return {
+        id: membership.id,
+        status: newStatus,
+        message: 'Estado de membresía actualizado exitosamente',
+      };
+    } catch (error) {
+      this.logger.error(
+        `Error actualizando estado de membresía ${membershipId}: ${error.message}`,
+      );
+
+      if (error instanceof RpcException) {
+        throw error;
+      }
+
+      throw new RpcException({
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: 'Error interno al actualizar estado de membresía',
+      });
+    }
+  }
+
+  async expireMembership(membershipId: number): Promise<void> {
+    try {
+      await this.membershipRepository.update(membershipId, {
+        status: MembershipStatus.EXPIRED,
+      });
+
+      this.logger.log(`Membresía ${membershipId} expirada automáticamente`);
+    } catch (error) {
+      this.logger.error(
+        `Error expirando membresía ${membershipId}: ${error.message}`,
+      );
+      throw error;
+    }
+  }
+
+  async renewMembership(membershipId: number): Promise<void> {
+    try {
+      const membership = await this.membershipRepository.findOne({
+        where: { id: membershipId },
+      });
+
+      if (!membership) {
+        throw new Error(`Membresía ${membershipId} no encontrada`);
+      }
+
+      // Renovar por 30 días
+      const newEndDate = new Date();
+      newEndDate.setDate(newEndDate.getDate() + 30);
+
+      await this.membershipRepository.update(membershipId, {
+        status: MembershipStatus.ACTIVE,
+        endDate: newEndDate,
+      });
+
+      this.logger.log(
+        `Membresía ${membershipId} renovada hasta ${newEndDate.toISOString()}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Error renovando membresía ${membershipId}: ${error.message}`,
+      );
+      throw error;
+    }
+  }
+
+  getMembershipPlan(planId: number): {
+    id: number;
+    name: string;
+    pointsRequired: number;
+  } {
+    try {
+      return {
+        id: planId,
+        name: 'Plan Estándar',
+        pointsRequired: 300,
+      };
+    } catch (error) {
+      this.logger.error(`Error obteniendo plan ${planId}: ${error.message}`);
+      throw error;
+    }
   }
 }

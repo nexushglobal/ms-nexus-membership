@@ -1,6 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PaymentMethod } from 'src/common/enums/payment-method.enum';
+import { PointsService } from 'src/common/services/points.service';
+import { UsersService } from 'src/common/services/users.service';
 import { Membership } from 'src/membership/entities/membership.entity';
 import { Repository } from 'typeorm';
 import { CreateReconsumptionDto } from '../dto/create-membership-reconsumtion.dto';
@@ -18,8 +20,15 @@ export class PaymentGatewayReconsumptionService extends BaseReconsumptionService
     reconsumptionRepository: Repository<MembershipReconsumption>,
     @InjectRepository(Membership)
     membershipRepository: Repository<Membership>,
+    pointsService: PointsService,
+    usersService: UsersService,
   ) {
-    super(reconsumptionRepository, membershipRepository);
+    super(
+      reconsumptionRepository,
+      membershipRepository,
+      pointsService,
+      usersService,
+    );
   }
 
   async processReconsumption(

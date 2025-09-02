@@ -9,6 +9,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { firstValueFrom } from 'rxjs';
 import { PaymentConfigType } from 'src/common/enums/payment-config.enum';
 import { PaymentMethod } from 'src/common/enums/payment-method.enum';
+import { PointsService } from 'src/common/services/points.service';
+import { UsersService } from 'src/common/services/users.service';
 import { envs } from 'src/config/envs';
 import { Membership } from 'src/membership/entities/membership.entity';
 import { Repository } from 'typeorm';
@@ -29,6 +31,8 @@ export abstract class BaseReconsumptionService {
     protected readonly reconsumptionRepository: Repository<MembershipReconsumption>,
     @InjectRepository(Membership)
     protected readonly membershipRepository: Repository<Membership>,
+    protected readonly pointsService: PointsService,
+    protected readonly usersService: UsersService,
   ) {
     this.usersClient = ClientProxyFactory.create({
       transport: Transport.NATS,
@@ -127,6 +131,27 @@ export abstract class BaseReconsumptionService {
   }
 
   /**
+   * Crea un registro de reconsumo con estado CONFIRMED
+   */
+  protected async createConfirmedReconsumptionRecord(
+    membership: Membership,
+    amount: number,
+    paymentDetails?: Record<string, any>,
+    notes?: string,
+  ): Promise<MembershipReconsumption> {
+    const reconsumption = this.reconsumptionRepository.create({
+      membership,
+      amount,
+      status: ReconsumptionStatus.ACTIVE,
+      periodDate: new Date(),
+      paymentDetails,
+      notes,
+    });
+
+    return await this.reconsumptionRepository.save(reconsumption);
+  }
+
+  /**
    * Crea el pago en el microservicio de payments
    */
   protected async createPayment(data: {
@@ -202,6 +227,58 @@ export abstract class BaseReconsumptionService {
     } catch (error) {
       this.logger.error(
         `Error en rollback del reconsumo ${reconsumptionId}: ${error.message}`,
+      );
+    }
+  }
+
+  /**
+   * Procesa volumen mensual y semanal para reconsumo
+   */
+  protected async processVolumeForReconsumption(
+    userId: string,
+    paymentId?: string,
+  ): Promise<void> {
+    this.logger.log(
+      `Procesando volumen mensual y semanal para usuario ${userId} en reconsumo`,
+    );
+
+    try {
+      const ancestors = await this.usersService.getUserAncestors(userId);
+
+      const weeklyVolumeUsers = ancestors.map((ancestor) => ({
+        userId: ancestor.userId,
+        userName: ancestor.userName,
+        userEmail: ancestor.userEmail,
+        site: ancestor.site,
+        paymentId: paymentId ? paymentId : undefined,
+      }));
+
+      await this.pointsService.createWeeklyVolume({
+        amount: 300,
+        volume: 300,
+        users: weeklyVolumeUsers,
+      });
+
+      const monthlyVolumeUsers = ancestors.map((ancestor) => ({
+        userId: ancestor.userId,
+        userName: ancestor.userName,
+        userEmail: ancestor.userEmail,
+        site: ancestor.site,
+        paymentId: paymentId ? paymentId : undefined,
+      }));
+
+      await this.pointsService.createMonthlyVolume({
+        amount: 300,
+        volume: 300,
+        users: monthlyVolumeUsers,
+      });
+
+      this.logger.log(
+        `Volumen procesado exitosamente para usuario ${userId} en reconsumo`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Error procesando volumen para usuario ${userId}: ${error.message}`,
       );
     }
   }

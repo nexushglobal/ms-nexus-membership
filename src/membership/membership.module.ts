@@ -24,7 +24,11 @@ import { VoucherSubscriptionService } from './services/subscription/voucher-subs
     forwardRef(() => MembershipReconsumptionModule),
     CommonModule,
   ],
-  controllers: [MembershipController, MembershipApprovalController, UserMembershipStatusController],
+  controllers: [
+    MembershipController,
+    MembershipApprovalController,
+    UserMembershipStatusController,
+  ],
   providers: [
     MembershipService,
     MembershipHistoryService,

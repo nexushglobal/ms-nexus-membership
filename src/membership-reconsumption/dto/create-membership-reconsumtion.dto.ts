@@ -26,3 +26,11 @@ export interface CreateReconsumptionPayload {
     size: number;
   }>;
 }
+
+export interface CreateAutomaticReconsumptionDto {
+  membershipId: number;
+  userId?: string;
+  type: 'ORDERS' | 'AUTORENEWAL';
+  amount: number;
+  processVolume: boolean;
+}
