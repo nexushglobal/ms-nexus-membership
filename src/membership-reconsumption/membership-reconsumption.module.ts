@@ -30,6 +30,10 @@ import { VoucherReconsumptionService } from './services/voucher-reconsumption.se
     PointsReconsumptionService,
     PaymentGatewayReconsumptionService,
   ],
-  exports: [MembershipReconsumptionService, TypeOrmModule],
+  exports: [
+    MembershipReconsumptionService,
+    TypeOrmModule,
+    PointsReconsumptionService,
+  ],
 })
 export class MembershipReconsumptionModule {}

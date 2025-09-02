@@ -5,6 +5,7 @@ import { databaseConfig } from './config/database.config';
 import { MembershipPlanModule } from './membership-plan/membership-plan.module';
 import { MembershipReconsumptionModule } from './membership-reconsumption/membership-reconsumption.module';
 import { MembershipModule } from './membership/membership.module';
+import { SchedulesModule } from './schedules/schedules.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { MembershipModule } from './membership/membership.module';
     MembershipModule,
     MembershipPlanModule,
     MembershipReconsumptionModule,
+    SchedulesModule,
     CommonModule,
   ],
   controllers: [],

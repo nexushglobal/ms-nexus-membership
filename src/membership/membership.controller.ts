@@ -3,8 +3,11 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
 import { FindByMembershipIdDto } from 'src/membership-reconsumption/dto/find-by-membership-id.dto';
 import { CheckUserActiveMembershipDto } from './dto/check-user-active-membership.dto';
 import { CreateSubscriptionPayload } from './dto/create-membership-subscription.dto';
+import { FindExpiredMembershipsDto } from './dto/find-expired-memberships.dto';
 import { GetSubscriptionsReportDto } from './dto/get-subscriptions-report.dto';
 import { GetUserMembershipByUserIdDto } from './dto/get-user-membership-by-user-id.dto';
+import { UpdateMembershipEndDateDto } from './dto/update-membership-end-date.dto';
+import { UpdateMembershipStatusDto } from './dto/update-membership-status.dto';
 import { UpdateMembershipDto } from './dto/update-membership.dto';
 import { MembershipHistoryService } from './services/membership-history.service';
 import { MembershipSubscriptionService } from './services/membership-subscription.service';
@@ -64,6 +67,27 @@ export class MembershipController {
     return this.membershipService.getSubscriptionsReport(
       data.startDate,
       data.endDate,
+    );
+  }
+
+  @MessagePattern({ cmd: 'membership.findExpiredMemberships' })
+  findExpiredMemberships(@Payload() data: FindExpiredMembershipsDto) {
+    return this.membershipService.findExpiredMemberships(data.currentDate);
+  }
+
+  @MessagePattern({ cmd: 'membership.updateEndDate' })
+  updateMembershipEndDate(@Payload() data: UpdateMembershipEndDateDto) {
+    return this.membershipService.updateMembershipEndDate(
+      data.membershipId,
+      data.endDate,
+    );
+  }
+
+  @MessagePattern({ cmd: 'membership.updateStatus' })
+  updateMembershipStatus(@Payload() data: UpdateMembershipStatusDto) {
+    return this.membershipService.updateMembershipStatus(
+      data.membershipId,
+      data.status,
     );
   }
 }

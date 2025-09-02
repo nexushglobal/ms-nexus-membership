@@ -9,10 +9,14 @@ import { RpcException } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PaymentMethod } from 'src/common/enums/payment-method.enum';
 import { BaseService } from 'src/common/services/base.service';
+import { PointsService } from 'src/common/services/points.service';
 import { MembershipStatus } from 'src/membership/entities/membership.entity';
 import { MembershipService } from 'src/membership/services/membership.service';
 import { Repository } from 'typeorm';
-import { CreateReconsumptionPayload } from './dto/create-membership-reconsumtion.dto';
+import {
+  CreateAutomaticReconsumptionDto,
+  CreateReconsumptionPayload,
+} from './dto/create-membership-reconsumtion.dto';
 import {
   FindByMembershipIdDto,
   FindByMembershipIdResponseDto,
@@ -37,6 +41,7 @@ export class MembershipReconsumptionService extends BaseService<MembershipRecons
     private readonly voucherReconsumptionService: VoucherReconsumptionService,
     private readonly pointsReconsumptionService: PointsReconsumptionService,
     private readonly paymentGatewayReconsumptionService: PaymentGatewayReconsumptionService,
+    private readonly pointsService: PointsService,
   ) {
     super(membershipReconsumptionRepository);
   }
@@ -228,6 +233,113 @@ export class MembershipReconsumptionService extends BaseService<MembershipRecons
         status: HttpStatus.BAD_REQUEST,
         message:
           'No puedes hacer reconsumo mientras tu membresía está pendiente',
+      });
+    }
+  }
+
+  async createAutomaticReconsumption(
+    data: CreateAutomaticReconsumptionDto,
+  ): Promise<any> {
+    this.logger.log(
+      `Creando reconsumo automático tipo ${data.type} para ${data.membershipId ? `membresía ${data.membershipId}` : `usuario ${data.userId}`}`,
+    );
+
+    try {
+      let membership;
+
+      if (data.membershipId) {
+        membership = await this.membershipService.findOneById(
+          data.membershipId,
+        );
+      } else if (data.userId) {
+        membership = await this.membershipService.findOneByUserId(data.userId);
+      } else {
+        throw new RpcException({
+          status: HttpStatus.BAD_REQUEST,
+          message: 'Se requiere membershipId o userId',
+        });
+      }
+
+      if (!membership) {
+        throw new RpcException({
+          status: HttpStatus.NOT_FOUND,
+          message: 'Membresía no encontrada',
+        });
+      }
+
+      // Crear el reconsumo según el tipo
+      let reconsumption: MembershipReconsumption | null;
+
+      if (data.type === 'ORDERS') {
+        // Reconsumo gratuito por órdenes
+        reconsumption = this.membershipReconsumptionRepository.create({
+          membership,
+          amount: 0,
+          status: ReconsumptionStatus.ACTIVE,
+          periodDate: new Date(),
+          paymentDetails: {
+            paymentMethod: 'ORDERS',
+            type: 'FREE_RECONSUMPTION',
+            reason: 'Cumple requisitos mínimos de órdenes',
+          },
+        });
+      } else {
+        // Reconsumo por puntos (AUTORENEWAL) - Usar el servicio existente
+        const reconsumoResult =
+          await this.pointsReconsumptionService.processReconsumption(
+            membership.userId as string,
+            {
+              paymentMethod: PaymentMethod.POINTS,
+              membershipId: membership.id as number,
+              amount: data.amount,
+            },
+          );
+
+        if (!reconsumoResult.success) {
+          throw new RpcException({
+            status: HttpStatus.BAD_REQUEST,
+            message: 'Error procesando reconsumo por puntos',
+          });
+        }
+
+        // El servicio ya creó el reconsumo, solo necesitamos obtenerlo
+        reconsumption = await this.membershipReconsumptionRepository.findOne({
+          where: { id: reconsumoResult.reconsumptionId },
+        });
+
+        if (!reconsumption) {
+          throw new RpcException({
+            status: HttpStatus.INTERNAL_SERVER_ERROR,
+            message: 'Error obteniendo reconsumo creado',
+          });
+        }
+      }
+
+      // Renovar la membresía
+      await this.membershipService.renewMembership(membership.id as number);
+
+      this.logger.log(
+        `Reconsumo automático ${data.type} creado exitosamente para membresía ${membership.id}`,
+      );
+
+      return {
+        success: true,
+        reconsumptionId: reconsumption.id,
+        membershipId: membership.id,
+        type: data.type,
+        amount: data.amount,
+        message: `Reconsumo automático ${data.type} procesado exitosamente`,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Error al crear reconsumo automático: ${error.message}`,
+      );
+      if (error instanceof RpcException) {
+        throw error;
+      }
+      throw new RpcException({
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: 'Error al procesar el reconsumo automático',
       });
     }
   }
