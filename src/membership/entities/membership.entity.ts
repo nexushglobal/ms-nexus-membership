@@ -30,6 +30,9 @@ export class Membership {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Column({ type: 'text', nullable: true })
+  note: string;
+
   @Column({ name: 'user_id' })
   userId: string; // UUID del usuario desde el microservicio de usuarios
 

@@ -435,12 +435,13 @@ export class MembershipService extends BaseService<Membership> {
 
       return memberships.map((membership) => {
         const contactInfo = contactInfoMap.get(membership.userId);
-        
+
         // Usar SOLO la información de contacto de la DB, no los métodos de extracción incorrectos
         const firstName = contactInfo?.firstName || '';
         const lastName = contactInfo?.lastName || '';
-        const fullName = contactInfo?.fullName || 
-          membership.userName || 
+        const fullName =
+          contactInfo?.fullName ||
+          membership.userName ||
           (firstName && lastName ? `${firstName} ${lastName}`.trim() : '');
 
         return {
@@ -452,6 +453,7 @@ export class MembershipService extends BaseService<Membership> {
           fullName: fullName,
           phone: contactInfo?.phone || '',
           created: membership.createdAt,
+          note: membership.note || '',
         };
       });
     } catch (error) {
