@@ -56,6 +56,7 @@ export class VoucherSubscriptionService extends BaseSubscriptionService {
         isUpgrade,
         currentMembership,
         previousMembershipState,
+        previousPlan,
       } = await this.calculatePricingWithRollback(userId, createDto.planId);
 
       let newMembership: Membership;
@@ -103,10 +104,10 @@ export class VoucherSubscriptionService extends BaseSubscriptionService {
 
       const metadata = isUpgrade
         ? {
-            'Desde plan': currentMembership?.plan.name,
-            'Hasta plan': newMembership.plan.name,
+            'Plan Anterior': previousPlan?.name,
+            'Plan Nuevo': newMembership.plan.name,
             'Monto original': newMembership.plan.price,
-            'Monto con descuento': currentMembership?.plan.price,
+            'Monto con descuento': totalAmount,
           }
         : {
             Plan: newMembership.plan.name,

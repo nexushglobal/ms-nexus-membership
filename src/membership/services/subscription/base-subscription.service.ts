@@ -62,6 +62,7 @@ export abstract class BaseSubscriptionService {
     isUpgrade: boolean;
     currentMembership?: Membership;
     previousMembershipState?: Membership;
+    previousPlan?: MembershipPlan | null;
   }> {
     // Buscar membresía actual del usuario
     const currentMembership = await this.membershipRepository.findOne({
@@ -71,6 +72,13 @@ export abstract class BaseSubscriptionService {
     });
 
     // Obtener información del nuevo plan
+    let previousPlan: MembershipPlan | null = null;
+    if (currentMembership?.fromPlan && currentMembership.fromPlanId) {
+      previousPlan = await this.membershipPlanRepository.findOne({
+        where: { id: currentMembership.fromPlanId },
+      });
+    }
+
     const newPlan = await this.membershipPlanRepository.findOne({
       where: { id: newPlanId },
     });
@@ -134,6 +142,7 @@ export abstract class BaseSubscriptionService {
       isUpgrade: true,
       currentMembership,
       previousMembershipState,
+      previousPlan,
     };
   }
 

@@ -73,9 +73,10 @@ export class PaymentGatewayReconsumptionService extends BaseReconsumptionService
           relatedEntityType: 'membership_reconsumption',
           relatedEntityId: reconsumption.id,
           metadata: {
-            membershipId: membership.id,
-            planName: membership.plan.name,
-            reconsumptionType: 'PAYMENT_GATEWAY',
+            'Plan Actual': membership.plan.name,
+            Tipo: membership.isPointLot
+              ? 'puntos de lote'
+              : 'pago de ordinario',
           },
           source_id: createDto.source_id,
         });

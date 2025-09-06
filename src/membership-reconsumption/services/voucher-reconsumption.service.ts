@@ -83,9 +83,10 @@ export class VoucherReconsumptionService extends BaseReconsumptionService {
           relatedEntityType: 'membership_reconsumption',
           relatedEntityId: reconsumption.id,
           metadata: {
-            membershipId: membership.id,
-            planName: membership.plan.name,
-            reconsumptionType: 'VOUCHER',
+            'Plan Actual': membership.plan.name,
+            Tipo: membership.isPointLot
+              ? 'puntos de lote'
+              : 'pago de ordinario',
           },
           payments: createDto.payments,
           files,

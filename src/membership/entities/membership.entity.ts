@@ -75,7 +75,7 @@ export class Membership {
     type: 'decimal',
     precision: 10,
     scale: 2,
-    default: 217,
+    default: 300,
     name: 'minimum_reconsumption_amount',
     transformer: {
       to: (value: number) => value,
