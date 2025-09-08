@@ -467,6 +467,7 @@ export class MembershipService extends BaseService<Membership> {
           fullName: fullName,
           phone: contactInfo?.phone || '',
           created: membership.createdAt,
+          note: membership.note || '',
         };
       });
     } catch (error) {

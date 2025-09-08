@@ -30,6 +30,9 @@ export class Membership {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Column({ type: 'text', nullable: true })
+  note: string;
+
   @Column({ name: 'user_id' })
   userId: string; // UUID del usuario desde el microservicio de usuarios
 
@@ -72,7 +75,7 @@ export class Membership {
     type: 'decimal',
     precision: 10,
     scale: 2,
-    default: 217,
+    default: 300,
     name: 'minimum_reconsumption_amount',
     transformer: {
       to: (value: number) => value,
