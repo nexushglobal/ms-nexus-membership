@@ -182,6 +182,7 @@ export abstract class BaseSubscriptionService {
     userInfo: any,
     planId: number,
     startDate?: Date,
+    status?: MembershipStatus,
   ): Promise<Membership> {
     const plan = await this.membershipPlanRepository.findOne({
       where: { id: planId },
@@ -217,7 +218,7 @@ export abstract class BaseSubscriptionService {
       plan,
       startDate: membershipStart,
       endDate: membershipEnd,
-      status: MembershipStatus.PENDING,
+      status: status ? status : MembershipStatus.PENDING,
     });
 
     return await this.membershipRepository.save(membership);
@@ -327,12 +328,12 @@ export abstract class BaseSubscriptionService {
   protected async updateMembershipForUpgrade(
     currentMembership: Membership,
     newPlan: MembershipPlan,
+    status?: MembershipStatus,
   ): Promise<Membership> {
     currentMembership.fromPlanId = currentMembership.plan.id;
     currentMembership.plan = newPlan;
-    currentMembership.status = MembershipStatus.PENDING;
+    currentMembership.status = status ? status : MembershipStatus.PENDING;
     currentMembership.fromPlan = true;
-
     return await this.membershipRepository.save(currentMembership);
   }
 

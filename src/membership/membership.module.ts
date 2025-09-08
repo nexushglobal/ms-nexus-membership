@@ -5,6 +5,7 @@ import { UserService } from 'src/common/services/user.service';
 import { MembershipPlan } from 'src/membership-plan/entities/membership-plan.entity';
 import { MembershipReconsumptionModule } from 'src/membership-reconsumption/membership-reconsumption.module';
 import { MembershipApprovalController } from './controllers/membership-approval.controller';
+import { ManualSubscriptionController } from './controllers/manual-subscription.controller';
 import { UserMembershipStatusController } from './controllers/user-membership-status.controller';
 import { MembershipHistory } from './entities/membership-history.entity';
 import { Membership } from './entities/membership.entity';
@@ -14,6 +15,7 @@ import { MembershipHistoryService } from './services/membership-history.service'
 import { MembershipSubscriptionService } from './services/membership-subscription.service';
 import { MembershipService } from './services/membership.service';
 import { UserMembershipStatusService } from './services/user-membership-status.service';
+import { ManualSubscriptionService } from './services/subscription/manual-subscription.service';
 import { PaymentGatewaySubscriptionService } from './services/subscription/payment-gateway-subscription.service';
 import { PointsSubscriptionService } from './services/subscription/points-subscription.service';
 import { VoucherSubscriptionService } from './services/subscription/voucher-subscription.service';
@@ -27,6 +29,7 @@ import { VoucherSubscriptionService } from './services/subscription/voucher-subs
   controllers: [
     MembershipController,
     MembershipApprovalController,
+    ManualSubscriptionController,
     UserMembershipStatusController,
   ],
   providers: [
@@ -36,6 +39,7 @@ import { VoucherSubscriptionService } from './services/subscription/voucher-subs
     VoucherSubscriptionService,
     PointsSubscriptionService,
     PaymentGatewaySubscriptionService,
+    ManualSubscriptionService,
     MembershipApprovalService,
     UserMembershipStatusService,
     UserService,
