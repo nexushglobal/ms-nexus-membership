@@ -196,7 +196,7 @@ export class MembershipReconsumptionApprovalService {
   /**
    * Calcula las nuevas fechas de la membresía según las reglas de negocio
    */
-  private calculateNewMembershipDates(membership: Membership): {
+  public calculateNewMembershipDates(membership: Membership): {
     newStartDate: Date;
     newEndDate: Date;
   } {

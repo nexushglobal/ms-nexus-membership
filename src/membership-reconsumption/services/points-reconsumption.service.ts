@@ -11,13 +11,17 @@ import { PaymentMethod } from 'src/common/enums/payment-method.enum';
 import { PaymentService } from 'src/common/services/payment.service';
 import { PointsService } from 'src/common/services/points.service';
 import { UsersService } from 'src/common/services/users.service';
-import { Membership } from 'src/membership/entities/membership.entity';
+import {
+  Membership,
+  MembershipStatus,
+} from 'src/membership/entities/membership.entity';
 import { MembershipService } from 'src/membership/services/membership.service';
 import { Repository } from 'typeorm';
 import { CreateReconsumptionDto } from '../dto/create-membership-reconsumtion.dto';
 import { MembershipReconsumption } from '../entities/membership-reconsumption.entity';
 import { ReconsumptionResponse } from '../interfaces/reconsumption-response.interface';
 import { BaseReconsumptionService } from './base-reconsumption.service';
+import { MembershipReconsumptionApprovalService } from './membership-reconsumption-approval.service';
 
 @Injectable()
 export class PointsReconsumptionService extends BaseReconsumptionService {
@@ -31,6 +35,7 @@ export class PointsReconsumptionService extends BaseReconsumptionService {
     private readonly paymentService: PaymentService,
     @Inject(forwardRef(() => MembershipService))
     private readonly membershipService: MembershipService,
+    private readonly approvalService: MembershipReconsumptionApprovalService,
     pointsService: PointsService,
     usersService: UsersService,
   ) {
@@ -69,14 +74,15 @@ export class PointsReconsumptionService extends BaseReconsumptionService {
 
       let paymentResult;
       if (usePoints) {
-        // 3. Crear el registro de reconsumo con estado PENDING
-        reconsumption = await this.createReconsumptionRecord(
+        // 3. Crear el registro de reconsumo con estado ACTIVE (inmediato para puntos)
+        reconsumption = await this.createConfirmedReconsumptionRecord(
           membership,
           createDto.amount,
           {
             paymentMethod: PaymentMethod.POINTS,
             planName: membership.plan.name,
           },
+          'Reconsumo inmediato con puntos',
         );
 
         // 4. Procesar pago con puntos
@@ -113,11 +119,14 @@ export class PointsReconsumptionService extends BaseReconsumptionService {
           paymentResult.paymentId as string,
         );
 
+        // 6. Actualizar fechas de membresía usando la misma lógica que vouchers
+        await this.updateMembershipDatesWithSameLogic(membership);
+
         // 6. Procesar volumen mensual y semanal
-        await this.processVolumeForReconsumption(
-          userId,
-          paymentResult.paymentId as string,
-        );
+        // await this.processVolumeForReconsumption(
+        //   userId,
+        //   paymentResult.paymentId as string,
+        // );
       } else {
         // 3. Crear el registro de reconsumo con estado CONFIRMED para reconsumo por órdenes
         reconsumption = await this.createConfirmedReconsumptionRecord(
@@ -131,8 +140,8 @@ export class PointsReconsumptionService extends BaseReconsumptionService {
           'Reconsumo automático por órdenes entregadas',
         );
 
-        // 4. Renovar la membresía (reactiva y extiende 30 días)
-        await this.membershipService.renewMembership(membership.id);
+        // 4. Actualizar fechas de membresía usando la misma lógica que vouchers
+        await this.updateMembershipDatesWithSameLogic(membership);
 
         // 5. Procesar volumen mensual y semanal sin paymentId
         await this.processVolumeForReconsumption(userId);
@@ -155,5 +164,21 @@ export class PointsReconsumptionService extends BaseReconsumptionService {
       if (reconsumption) await this.rollbackReconsumption(reconsumption.id);
       throw error;
     }
+  }
+
+  /**
+   * Actualiza las fechas de membresía usando la misma lógica que el approval service
+   */
+  private async updateMembershipDatesWithSameLogic(
+    membership: Membership,
+  ): Promise<void> {
+    // Reutilizar la lógica del approval service sin duplicar el reconsumo
+    const { newStartDate, newEndDate } =
+      this.approvalService.calculateNewMembershipDates(membership);
+    await this.membershipRepository.update(membership.id, {
+      startDate: newStartDate,
+      endDate: newEndDate,
+      status: MembershipStatus.ACTIVE,
+    });
   }
 }

@@ -654,12 +654,16 @@ export class MembershipService extends BaseService<Membership> {
         throw new Error(`Membresía ${membershipId} no encontrada`);
       }
 
-      // Renovar por 30 días
-      const newEndDate = new Date();
-      newEndDate.setDate(newEndDate.getDate() + 30);
+      // Fecha de inicio: día que paga el reconsumo (HOY)
+      const newStartDate = new Date();
+      
+      // Fecha de fin: un mes exacto después (mismo día del mes siguiente)
+      const newEndDate = new Date(newStartDate);
+      newEndDate.setMonth(newEndDate.getMonth() + 1);
 
       await this.membershipRepository.update(membershipId, {
         status: MembershipStatus.ACTIVE,
+        startDate: newStartDate,
         endDate: newEndDate,
       });
 
