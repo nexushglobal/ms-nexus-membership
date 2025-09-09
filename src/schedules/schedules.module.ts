@@ -5,6 +5,7 @@ import { MembershipReconsumptionModule } from 'src/membership-reconsumption/memb
 import { MembershipModule } from 'src/membership/membership.module';
 import { CutSchedulerService } from './services/cut-scheduler.service';
 import { AutomaticReconsumptionService } from './services/cuts/automatic-reconsumption.service';
+import { WeeklyVolumeProcessingService } from './services/cuts/weekly-volume-processing.service';
 
 @Module({
   imports: [
@@ -19,7 +20,12 @@ import { AutomaticReconsumptionService } from './services/cuts/automatic-reconsu
 
     // Cut services
     AutomaticReconsumptionService,
+    WeeklyVolumeProcessingService,
   ],
-  exports: [CutSchedulerService, AutomaticReconsumptionService],
+  exports: [
+    CutSchedulerService,
+    AutomaticReconsumptionService,
+    WeeklyVolumeProcessingService,
+  ],
 })
 export class SchedulesModule {}

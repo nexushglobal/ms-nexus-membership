@@ -295,17 +295,15 @@ export class MembershipReconsumptionService extends BaseService<MembershipRecons
             },
           );
 
-        if (!reconsumoResult.success) {
+        if (!reconsumoResult.reconsumption) {
           throw new RpcException({
             status: HttpStatus.BAD_REQUEST,
             message: 'Error procesando reconsumo por puntos',
           });
         }
 
-        // El servicio ya creó el reconsumo, solo necesitamos obtenerlo
-        reconsumption = await this.membershipReconsumptionRepository.findOne({
-          where: { id: reconsumoResult.reconsumptionId },
-        });
+        // El servicio ya creó el reconsumo, usamos el objeto retornado
+        reconsumption = reconsumoResult.reconsumption;
 
         if (!reconsumption) {
           throw new RpcException({

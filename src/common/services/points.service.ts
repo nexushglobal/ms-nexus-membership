@@ -74,4 +74,15 @@ export class PointsService {
       this.client.send({ cmd: 'pointsLotTransaction.createLotPoints' }, data),
     );
   }
+
+  async processWeeklyVolumes(): Promise<{
+    processed: number;
+    successful: number;
+    failed: number;
+    totalPoints: number;
+  }> {
+    return await firstValueFrom(
+      this.client.send({ cmd: 'weeklyVolume.processWeeklyVolumes' }, {}),
+    );
+  }
 }

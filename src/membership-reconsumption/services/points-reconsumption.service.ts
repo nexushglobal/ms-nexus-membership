@@ -16,6 +16,7 @@ import { MembershipService } from 'src/membership/services/membership.service';
 import { Repository } from 'typeorm';
 import { CreateReconsumptionDto } from '../dto/create-membership-reconsumtion.dto';
 import { MembershipReconsumption } from '../entities/membership-reconsumption.entity';
+import { ReconsumptionResponse } from '../interfaces/reconsumption-response.interface';
 import { BaseReconsumptionService } from './base-reconsumption.service';
 
 @Injectable()
@@ -51,15 +52,7 @@ export class PointsReconsumptionService extends BaseReconsumptionService {
       size: number;
     }>,
     usePoints?: boolean,
-  ): Promise<{
-    success: boolean;
-    reconsumptionId: number;
-    paymentId: string;
-    pointsTransactionId: string;
-    message: string;
-    remainingPoints: number;
-    amount: number;
-  }> {
+  ): Promise<ReconsumptionResponse> {
     this.logger.log(`Procesando reconsumo con POINTS para usuario ${userId}`);
 
     let reconsumption: MembershipReconsumption | null = null;
@@ -150,14 +143,9 @@ export class PointsReconsumptionService extends BaseReconsumptionService {
       );
 
       return {
-        success: true,
-        reconsumptionId: reconsumption.id,
+        reconsumption,
         paymentId: paymentResult?.paymentId ?? null,
-        pointsTransactionId: paymentResult?.pointsTransactionId ?? null,
-        message:
-          'Reconsumo procesado exitosamente con puntos o pago de ordenes',
-        remainingPoints: paymentResult?.remainingPoints ?? null,
-        amount: createDto.amount,
+        totalAmount: createDto.amount,
       };
     } catch (error) {
       this.logger.error(

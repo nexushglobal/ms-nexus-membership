@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { AutomaticReconsumptionService } from './cuts/automatic-reconsumption.service';
+import { WeeklyVolumeProcessingService } from './cuts/weekly-volume-processing.service';
 
 @Injectable()
 export class CutSchedulerService {
@@ -8,6 +9,7 @@ export class CutSchedulerService {
 
   constructor(
     private readonly automaticReconsumptionService: AutomaticReconsumptionService,
+    private readonly weeklyVolumeProcessingService: WeeklyVolumeProcessingService,
   ) {}
 
   // Ejecuta a las 3:00 AM todos los días (hora de Lima GMT-5)
@@ -24,6 +26,29 @@ export class CutSchedulerService {
     } catch (error) {
       this.logger.error(
         'Error ejecutando corte automático de reconsumo:',
+        error.stack,
+      );
+    }
+  }
+
+  // Ejecuta el procesamiento de volúmenes semanales los lunes a las 2:00 AM (hora de Lima GMT-5)
+  @Cron('0 21 * * 1', {
+    name: 'weekly-volume-processing',
+    timeZone: 'America/Lima',
+  })
+  async executeWeeklyVolumeProcessing(): Promise<void> {
+    this.logger.log(
+      'Iniciando corte de volúmenes semanales a las 2:00 AM del lunes',
+    );
+
+    try {
+      const result = await this.weeklyVolumeProcessingService.execute();
+      this.logger.log(
+        `Corte de volúmenes semanales completado exitosamente: ${result.processed} procesados, ${result.successful} exitosos, ${result.totalPoints} puntos otorgados`,
+      );
+    } catch (error) {
+      this.logger.error(
+        'Error ejecutando corte de volúmenes semanales:',
         error.stack,
       );
     }

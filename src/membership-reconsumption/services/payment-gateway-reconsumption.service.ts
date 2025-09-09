@@ -7,6 +7,7 @@ import { Membership } from 'src/membership/entities/membership.entity';
 import { Repository } from 'typeorm';
 import { CreateReconsumptionDto } from '../dto/create-membership-reconsumtion.dto';
 import { MembershipReconsumption } from '../entities/membership-reconsumption.entity';
+import { ReconsumptionResponse } from '../interfaces/reconsumption-response.interface';
 import { BaseReconsumptionService } from './base-reconsumption.service';
 
 @Injectable()
@@ -34,7 +35,7 @@ export class PaymentGatewayReconsumptionService extends BaseReconsumptionService
   async processReconsumption(
     userId: string,
     createDto: CreateReconsumptionDto,
-  ): Promise<any> {
+  ): Promise<ReconsumptionResponse> {
     this.logger.log(
       `Procesando reconsumo PAYMENT_GATEWAY para usuario ${userId}`,
     );

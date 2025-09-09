@@ -7,6 +7,7 @@ import { Membership } from 'src/membership/entities/membership.entity';
 import { Repository } from 'typeorm';
 import { CreateReconsumptionDto } from '../dto/create-membership-reconsumtion.dto';
 import { MembershipReconsumption } from '../entities/membership-reconsumption.entity';
+import { ReconsumptionResponse } from '../interfaces/reconsumption-response.interface';
 import { BaseReconsumptionService } from './base-reconsumption.service';
 
 @Injectable()
@@ -38,7 +39,7 @@ export class VoucherReconsumptionService extends BaseReconsumptionService {
       mimetype: string;
       size: number;
     }>,
-  ): Promise<any> {
+  ): Promise<ReconsumptionResponse> {
     this.logger.log(`Procesando reconsumo VOUCHER para usuario ${userId}`);
 
     try {
