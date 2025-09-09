@@ -123,10 +123,10 @@ export class PointsReconsumptionService extends BaseReconsumptionService {
         await this.updateMembershipDatesWithSameLogic(membership);
 
         // 6. Procesar volumen mensual y semanal
-        // await this.processVolumeForReconsumption(
-        //   userId,
-        //   paymentResult.paymentId as string,
-        // );
+        await this.processVolumeForReconsumption(
+          userId,
+          paymentResult.paymentId as string,
+        );
       } else {
         // 3. Crear el registro de reconsumo con estado CONFIRMED para reconsumo por órdenes
         reconsumption = await this.createConfirmedReconsumptionRecord(
