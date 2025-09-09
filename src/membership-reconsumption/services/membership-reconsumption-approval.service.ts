@@ -95,14 +95,14 @@ export class MembershipReconsumptionApprovalService {
         action: MembershipAction.RECONSUMPTION_ADDED,
         notes: `Reconsumo aprobado por monto de ${data.amount}`,
         metadata: {
-          reconsumptionId: data.reconsumptionId,
-          paymentId: data.paymentId,
-          amount: data.amount,
-          approvedAt: data.approvedAt,
-          previousStartDate: membership.startDate,
-          previousEndDate: membership.endDate,
-          newStartDate,
-          newEndDate,
+          'ID de reconsumo': data.reconsumptionId,
+          // paymentId: data.paymentId,
+          Monto: data.amount,
+          'Aprobado en': data.approvedAt,
+          'Fecha de inicio anterior': membership.startDate,
+          'Fecha de fin anterior': membership.endDate,
+          'Fecha de inicio nueva': newStartDate,
+          'Fecha de fin nueva': newEndDate,
         },
       });
 

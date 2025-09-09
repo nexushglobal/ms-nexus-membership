@@ -248,7 +248,7 @@ export abstract class BaseSubscriptionService {
       },
       action,
       metadata: {
-        details,
+        Detalle: details,
       },
       notes,
     });

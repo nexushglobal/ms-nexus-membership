@@ -57,7 +57,7 @@ export class MembershipApprovalService {
         action: MembershipAction.PAYMENT_RECEIVED,
         notes: `Pago de membresía aprobado exitosamente`,
         metadata: {
-          'ID de Pago': data.paymentId,
+          // 'ID de Pago': data.paymentId,
           'Monto del Pago': data.amount,
           'Estado de la Membresía': 'APROBADA',
           'Plan de Membresía': membership.plan.name,
@@ -129,7 +129,7 @@ export class MembershipApprovalService {
         action: MembershipAction.UPGRADE,
         notes: `Upgrade de plan aprobado con pago ID ${data.paymentId}`,
         metadata: {
-          'ID de Pago': data.paymentId,
+          // 'ID de Pago': data.paymentId,
           'Monto del Upgrade': data.upgradeAmount,
           'Plan Anterior': previousPlan?.name || 'Desconocido',
           'Plan Actual': membership.plan.name,
@@ -289,7 +289,7 @@ export class MembershipApprovalService {
     const history = this.membershipHistoryRepository.create({
       membership: membership,
       action,
-      metadata: { details },
+      metadata: { Detalle: details },
     });
 
     await this.membershipHistoryRepository.save(history);

@@ -656,7 +656,6 @@ export class MembershipService extends BaseService<Membership> {
 
       // Fecha de inicio: día que paga el reconsumo (HOY)
       const newStartDate = new Date();
-      
       // Fecha de fin: un mes exacto después (mismo día del mes siguiente)
       const newEndDate = new Date(newStartDate);
       newEndDate.setMonth(newEndDate.getMonth() + 1);

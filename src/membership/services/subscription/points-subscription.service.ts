@@ -117,9 +117,9 @@ export class PointsSubscriptionService extends BaseSubscriptionService {
         relatedEntityType: 'membership',
         relatedEntityId: newMembership.id,
         metadata: {
-          membershipId: newMembership.id,
-          planId: createDto.planId,
-          isUpgrade,
+          'ID de membresía': newMembership.id,
+          'ID de plan': createDto.planId,
+          '¿Es upgrade?': isUpgrade,
         },
       };
 
