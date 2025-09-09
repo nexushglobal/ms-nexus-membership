@@ -84,16 +84,16 @@ export class PointsReconsumptionService extends BaseReconsumptionService {
           userId,
           userEmail: userInfo.email,
           username: userInfo.fullName,
-          paymentConfig: 'RECONSUMPTION' as any,
+          // paymentConfig: 'RECONSUMPTION' as any,
           amount: createDto.amount,
           paymentMethod: PaymentMethod.POINTS,
           relatedEntityType: 'membership_reconsumption',
           relatedEntityId: reconsumption.id,
           metadata: {
-            reconsumptionId: reconsumption.id,
-            membershipId: membership.id,
-            planId: membership.plan.id,
-            planName: membership.plan.name,
+            'Plan Actual': membership.plan.name,
+            Tipo: membership.isPointLot
+              ? 'puntos de lote'
+              : 'pago de ordinario',
           },
         };
 

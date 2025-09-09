@@ -154,6 +154,7 @@ export class MembershipReconsumptionService extends BaseService<MembershipRecons
             data.userId,
             data.dto,
             data.files,
+            true,
           );
 
         case PaymentMethod.PAYMENT_GATEWAY:
