@@ -192,6 +192,8 @@ export class AutomaticReconsumptionService {
             membershipId: membership.id,
             amount: membershipPlan.pointsRequired,
           },
+          undefined,
+          true,
         );
 
         return {
