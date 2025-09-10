@@ -1,4 +1,11 @@
-import { IsEmail, IsNotEmpty, IsNumber, IsString, Min } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Min,
+} from 'class-validator';
 
 export class CreateManualSubscriptionDto {
   @IsEmail({}, { message: 'Debe proporcionar un email válido' })
@@ -10,7 +17,7 @@ export class CreateManualSubscriptionDto {
   planId: number;
 
   @IsString({ message: 'El motivo debe ser una cadena de texto' })
-  @IsNotEmpty({ message: 'El motivo de la membresía es requerido' })
+  @IsOptional()
   reason: string;
 }
 

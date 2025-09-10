@@ -106,8 +106,8 @@ export class ManualSubscriptionService extends BaseSubscriptionService {
       await this.createMembershipHistory(
         membership.id,
         membershipAction,
-        `Suscripción manual - Razón: ${dto.reason}`,
-        `Procesada manualmente por administrador. Motivo: ${dto.reason}`,
+        `Razón: ${dto.reason || 'Subscripción manual de membresía'}`,
+        `Procesada manualmente por administrador.`,
       );
 
       this.logger.log(
