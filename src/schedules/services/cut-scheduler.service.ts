@@ -13,7 +13,7 @@ export class CutSchedulerService {
   ) {}
 
   // Ejecuta a las 3:00 AM todos los días (hora de Lima GMT-5)
-  @Cron('23 22 * * *', {
+  @Cron('00 03 * * *', {
     name: 'automatic-reconsumption-cut',
     timeZone: 'America/Lima',
   })
