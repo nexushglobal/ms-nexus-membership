@@ -98,8 +98,8 @@ export class MembershipReconsumptionApprovalService {
           'ID de reconsumo': data.reconsumptionId,
           Monto: data.amount,
           'Aprobado en': data.approvedAt,
-          'Periodo membresía anterior': `${membership.startDate.toLocaleDateString('pe-PE')} - ${membership.endDate.toLocaleDateString('pe-PE')}`,
-          'Periodo reconsumo': `${newStartDate.toLocaleDateString('pe-PE')} - ${newEndDate.toLocaleDateString('pe-PE')}`,
+          'Periodo membresía anterior': `${new Date(membership.startDate).toLocaleDateString('es-PE')} - ${new Date(membership.endDate).toLocaleDateString('es-PE')}`,
+          'Periodo reconsumo': `${newStartDate.toLocaleDateString('es-PE')} - ${newEndDate.toLocaleDateString('es-PE')}`,
         },
       });
 

@@ -61,8 +61,8 @@ export class MembershipApprovalService {
           'Monto del Pago': data.amount,
           'Estado de la Membresía': 'APROBADA',
           'Plan de Membresía': membership.plan.name,
-          'Fecha de Aprobación': date.toLocaleDateString('pe-PE'),
-          'Hora de Aprobación': date.toLocaleTimeString('pe-PE'),
+          'Fecha de Aprobación': date.toLocaleDateString('es-PE'),
+          'Hora de Aprobación': date.toLocaleTimeString('es-PE'),
           Descripción: `Membresía aprobada exitosamente para el plan ${membership.plan.name}`,
         },
       });
@@ -135,8 +135,8 @@ export class MembershipApprovalService {
           'Plan Anterior': previousPlan?.name || 'Ninguno',
           'Plan Actual': membership.plan.name,
           'Estado de la Membresía': 'APROBADA',
-          'Fecha de Aprobación': date.toLocaleDateString('pe-PE'),
-          'Hora de Aprobación': date.toLocaleTimeString('pe-PE'),
+          'Fecha de Aprobación': date.toLocaleDateString('es-PE'),
+          'Hora de Aprobación': date.toLocaleTimeString('es-PE'),
           Descripción: `Upgrade exitoso a ${membership.plan.name}`,
         },
       });
