@@ -136,7 +136,9 @@ export class VoucherSubscriptionService extends BaseSubscriptionService {
 
         return {
           membership: newMembership,
-          payment,
+          payment: {
+            id: payment.paymentId,
+          },
           isUpgrade,
           totalAmount,
         };

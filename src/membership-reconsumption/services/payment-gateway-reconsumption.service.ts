@@ -94,7 +94,7 @@ export class PaymentGatewayReconsumptionService extends BaseReconsumptionService
 
         return {
           reconsumption,
-          payment,
+          paymentId: payment.paymentId || '',
           totalAmount: amount,
         };
       } catch (paymentError) {

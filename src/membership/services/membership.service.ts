@@ -151,6 +151,7 @@ export class MembershipService extends BaseService<Membership> {
   ): Promise<GetUserMembershipByUserIdResponseDto> {
     try {
       // Buscar membresía activa del usuario
+      console.log('Fetching membership for userId:', userId);
       const membership = await this.membershipRepository.findOne({
         where: {
           userId,

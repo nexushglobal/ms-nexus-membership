@@ -132,7 +132,9 @@ export class PaymentGatewaySubscriptionService extends BaseSubscriptionService {
 
         return {
           membership: newMembership,
-          payment,
+          payment: {
+            id: payment.paymentId,
+          },
           isUpgrade,
           totalAmount,
         };
