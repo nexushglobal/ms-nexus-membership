@@ -101,7 +101,7 @@ export class PaymentGatewaySubscriptionService extends BaseSubscriptionService {
 
       const metadata = isUpgrade
         ? {
-            'Plan Anterior': previousPlan?.name,
+            'Plan Anterior': previousPlan?.name || 'Ninguno',
             'Plan Nuevo': newMembership.plan.name,
             'Monto original': newMembership.plan.price,
             'Monto con descuento': totalAmount,

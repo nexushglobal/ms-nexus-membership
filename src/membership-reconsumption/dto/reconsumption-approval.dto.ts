@@ -1,6 +1,6 @@
 export interface ApproveReconsumptionDto {
   reconsumptionId: number;
-  paymentId: number;
+  paymentId?: number | null;
   amount: number;
   approvedAt: Date;
 }

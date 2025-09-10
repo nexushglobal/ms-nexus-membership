@@ -30,7 +30,10 @@ export class UsersService {
     }[]
   > {
     return await firstValueFrom(
-      this.client.send({ cmd: 'user.tree.getAncestors' }, { userId }),
+      this.client.send(
+        { cmd: 'user.getActiveAncestorsWithMembership' },
+        { userId },
+      ),
     );
   }
 }

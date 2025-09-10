@@ -96,13 +96,10 @@ export class MembershipReconsumptionApprovalService {
         notes: `Reconsumo aprobado por monto de ${data.amount}`,
         metadata: {
           'ID de reconsumo': data.reconsumptionId,
-          // paymentId: data.paymentId,
           Monto: data.amount,
           'Aprobado en': data.approvedAt,
-          'Fecha de inicio anterior': membership.startDate,
-          'Fecha de fin anterior': membership.endDate,
-          'Fecha de inicio nueva': newStartDate,
-          'Fecha de fin nueva': newEndDate,
+          'Periodo membresía anterior': `${membership.startDate.toLocaleDateString('pe-PE')} - ${membership.endDate.toLocaleDateString('pe-PE')}`,
+          'Periodo reconsumo': `${newStartDate.toLocaleDateString('pe-PE')} - ${newEndDate.toLocaleDateString('pe-PE')}`,
         },
       });
 

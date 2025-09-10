@@ -61,8 +61,8 @@ export class MembershipApprovalService {
           'Monto del Pago': data.amount,
           'Estado de la Membresía': 'APROBADA',
           'Plan de Membresía': membership.plan.name,
-          'Fecha de Aprobación': date.toLocaleDateString('es-ES'),
-          'Hora de Aprobación': date.toLocaleTimeString('es-ES'),
+          'Fecha de Aprobación': date.toLocaleDateString('pe-PE'),
+          'Hora de Aprobación': date.toLocaleTimeString('pe-PE'),
           Descripción: `Membresía aprobada exitosamente para el plan ${membership.plan.name}`,
         },
       });
@@ -130,14 +130,14 @@ export class MembershipApprovalService {
         notes: `Upgrade de plan aprobado con pago ID ${data.paymentId}`,
         metadata: {
           // 'ID de Pago': data.paymentId,
-          'Monto del Upgrade': data.upgradeAmount,
-          'Plan Anterior': previousPlan?.name || 'Desconocido',
+          'Monto pagado por Upgrade': data.upgradeAmount,
+          'Monto del Plan': membership.plan.price,
+          'Plan Anterior': previousPlan?.name || 'Ninguno',
           'Plan Actual': membership.plan.name,
           'Estado de la Membresía': 'APROBADA',
-          'Fecha de Aprobación': date.toLocaleDateString('es-ES'),
-          'Hora de Aprobación': date.toLocaleTimeString('es-ES'),
-          Descripción: `Upgrade exitoso de ${previousPlan?.name || 'Desconocido'} a ${membership.plan.name}`,
-          'Costo del Upgrade': `$${data.upgradeAmount}`,
+          'Fecha de Aprobación': date.toLocaleDateString('pe-PE'),
+          'Hora de Aprobación': date.toLocaleTimeString('pe-PE'),
+          Descripción: `Upgrade exitoso a ${membership.plan.name}`,
         },
       });
 
