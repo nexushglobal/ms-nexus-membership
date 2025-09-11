@@ -65,9 +65,15 @@ export class MembershipReconsumptionService extends BaseService<MembershipRecons
           status: ReconsumptionStatus.PENDING,
         },
       });
-    const nextReconsumptionDate = new Date(membership.endDate);
+    const currentDate = new Date();
+    const fiveDaysBeforeExpiration = new Date(membership.endDate);
+    fiveDaysBeforeExpiration.setDate(fiveDaysBeforeExpiration.getDate() - 5);
+
     const canReconsume =
-      !pendingReconsumption && new Date() >= nextReconsumptionDate;
+      !pendingReconsumption &&
+      (membership.status === MembershipStatus.ACTIVE
+        ? currentDate >= fiveDaysBeforeExpiration
+        : currentDate >= new Date(membership.endDate));
     const autoRenewal = membership.autoRenewal;
     const reconsumptionAmount = membership.minimumReconsumptionAmount;
     const infoReconsumptions = await this.findAllBase(
@@ -214,16 +220,16 @@ export class MembershipReconsumptionService extends BaseService<MembershipRecons
 
     // 3. Validar estado de la membresía y fechas
     const currentDate = new Date();
-    const sevenDaysBeforeExpiration = new Date(membership.endDate);
-    sevenDaysBeforeExpiration.setDate(sevenDaysBeforeExpiration.getDate() - 7);
+    const fiveDaysBeforeExpiration = new Date(membership.endDate);
+    fiveDaysBeforeExpiration.setDate(fiveDaysBeforeExpiration.getDate() - 5);
 
-    // Si la membresía está activa, debe estar dentro de los 7 días antes de expirar
+    // Si la membresía está activa, debe estar dentro de los 5 días antes de expirar
     if (membership.status === MembershipStatus.ACTIVE) {
-      if (currentDate < sevenDaysBeforeExpiration) {
+      if (currentDate < fiveDaysBeforeExpiration) {
         throw new RpcException({
           status: HttpStatus.BAD_REQUEST,
           message:
-            'Solo puedes hacer reconsumo 7 días antes de que expire tu membresía o después de que haya expirado',
+            'Solo puedes hacer reconsumo 5 días antes de que expire tu membresía o después de que haya expirado',
         });
       }
     }
