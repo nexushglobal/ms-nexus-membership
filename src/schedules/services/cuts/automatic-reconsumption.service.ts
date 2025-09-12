@@ -65,7 +65,6 @@ export class AutomaticReconsumptionService {
             membership.id,
           );
           successResults.push(result);
-          this.logger.log(`Membresía ${membership.id} procesada exitosamente`);
         } catch (error) {
           const failedResult: MembershipProcessResult = {
             membershipId: membership.id,
@@ -76,8 +75,7 @@ export class AutomaticReconsumptionService {
           };
           failedResults.push(failedResult);
           this.logger.error(
-            `Error procesando membresía ${membership.id}:`,
-            error.stack,
+            `Error procesando membresía ${membership.id}: ${error.message}`,
           );
         }
       }
@@ -110,8 +108,6 @@ export class AutomaticReconsumptionService {
   private async processReconsumptionForMembership(
     membershipId: number,
   ): Promise<MembershipProcessResult> {
-    this.logger.log(`Procesando reconsumo para membresía: ${membershipId}`);
-
     const membership = await this.membershipService.findOneById(membershipId);
     if (!membership) {
       throw new RpcException({
@@ -149,10 +145,6 @@ export class AutomaticReconsumptionService {
     const meetsMinimumAmount = userOrderSummary?.meetsMinimumAmount || false;
 
     if (!membership.isPointLot && meetsMinimumAmount) {
-      this.logger.log(
-        `Usuario ${membership.userId} cumple con el monto mínimo de órdenes - reconsumo gratuito`,
-      );
-
       await this.pointsReconsumptionService.processReconsumption(
         membership.userId,
         {
@@ -181,10 +173,6 @@ export class AutomaticReconsumptionService {
       );
 
       if (userPoints.availablePoints >= membershipPlan.pointsRequired) {
-        this.logger.log(
-          `Usuario ${membership.userId} tiene puntos suficientes - reconsumo por puntos`,
-        );
-
         await this.pointsReconsumptionService.processReconsumption(
           membership.userId,
           {
@@ -205,10 +193,6 @@ export class AutomaticReconsumptionService {
           success: true,
         };
       } else {
-        this.logger.log(
-          `Usuario ${membership.userId} no tiene puntos suficientes - membresía expirada`,
-        );
-
         await this.membershipService.expireMembership(membership.id);
 
         return {
@@ -219,10 +203,6 @@ export class AutomaticReconsumptionService {
         };
       }
     } else {
-      this.logger.log(
-        `Usuario ${membership.userId} no tiene autorenovación habilitada - membresía expirada`,
-      );
-
       await this.membershipService.expireMembership(membership.id);
 
       return {
