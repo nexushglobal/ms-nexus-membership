@@ -32,7 +32,7 @@ export class CutSchedulerService {
   }
 
   // Ejecuta el procesamiento de volúmenes semanales los lunes a las 2:00 AM (hora de Lima GMT-5)
-  @Cron('28 18 * * 1', {
+  @Cron('0 19 * * 2', {
     name: 'weekly-volume-processing',
     timeZone: 'America/Lima',
   })
