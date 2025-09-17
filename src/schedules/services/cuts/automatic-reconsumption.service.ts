@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import { PaymentMethod } from 'src/common/enums/payment-method.enum';
@@ -44,6 +45,17 @@ export class AutomaticReconsumptionService {
     private readonly pointsReconsumptionService: PointsReconsumptionService,
   ) {}
 
+  /**
+   * Verifica si la membresía está en período de gracia (7 días después de endDate)
+   */
+  private isInGracePeriod(membership: any): boolean {
+    const gracePeriodEndDate = new Date(membership.endDate);
+    gracePeriodEndDate.setDate(gracePeriodEndDate.getDate() + 7);
+
+    const currentDate = new Date();
+    return currentDate <= gracePeriodEndDate;
+  }
+
   async execute(): Promise<CutResult> {
     this.logger.log('Iniciando proceso de corte automático de reconsumo');
 
@@ -64,7 +76,9 @@ export class AutomaticReconsumptionService {
           const result = await this.processReconsumptionForMembership(
             membership.id,
           );
-          successResults.push(result);
+          if (result) {
+            successResults.push(result);
+          }
         } catch (error) {
           const failedResult: MembershipProcessResult = {
             membershipId: membership.id,
@@ -107,7 +121,7 @@ export class AutomaticReconsumptionService {
 
   private async processReconsumptionForMembership(
     membershipId: number,
-  ): Promise<MembershipProcessResult> {
+  ): Promise<MembershipProcessResult | null> {
     const membership = await this.membershipService.findOneById(membershipId);
     if (!membership) {
       throw new RpcException({
@@ -193,6 +207,12 @@ export class AutomaticReconsumptionService {
           success: true,
         };
       } else {
+        // Verificar período de gracia antes de expirar
+        if (this.isInGracePeriod(membership)) {
+          // No hacer nada, dejar para el próximo corte
+          return null;
+        }
+
         await this.membershipService.expireMembership(membership.id);
 
         return {
@@ -203,6 +223,12 @@ export class AutomaticReconsumptionService {
         };
       }
     } else {
+      // Verificar período de gracia antes de expirar
+      if (this.isInGracePeriod(membership)) {
+        // No hacer nada, dejar para el próximo corte
+        return null;
+      }
+
       await this.membershipService.expireMembership(membership.id);
 
       return {
