@@ -13,7 +13,7 @@ export class CutSchedulerService {
   ) {}
 
   // Ejecuta a las 3:00 AM todos los días (hora de Lima GMT-5)
-  @Cron('40 20 * * *', {
+  @Cron('40 22 * * *', {
     name: 'automatic-reconsumption-cut',
     timeZone: 'America/Lima',
   })
@@ -32,7 +32,7 @@ export class CutSchedulerService {
   }
 
   // Ejecuta el procesamiento de volúmenes semanales los lunes a las 2:00 AM (hora de Lima GMT-5)
-  @Cron('48 20 * * 2', {
+  @Cron('50 22 * * 2', {
     name: 'weekly-volume-processing',
     timeZone: 'America/Lima',
   })
