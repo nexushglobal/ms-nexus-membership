@@ -36,6 +36,11 @@ export class MembershipController {
     return this.membershipService.getUserMembershipInfo(userId);
   }
 
+  @MessagePattern({ cmd: 'membership.getMembershipDetailById' })
+  getMembershipDetailById(@Payload('membershipId') membershipId: number) {
+    return this.membershipService.getMembershipDetailById(membershipId);
+  }
+
   @MessagePattern({ cmd: 'membership.createSubscription' })
   createSubscription(@Payload() data: CreateSubscriptionPayload) {
     return this.membershipSubscriptionService.createSubscription(data);

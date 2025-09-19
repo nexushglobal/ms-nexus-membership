@@ -180,6 +180,7 @@ export class MembershipService extends BaseService<Membership> {
           name: membership.plan.name,
           commissionPercentage: membership.plan.commissionPercentage,
           directCommissionAmount: membership.plan.directCommissionAmount,
+          binaryPoints: membership.plan.binaryPoints,
         },
       };
     } catch (error) {
@@ -197,6 +198,52 @@ export class MembershipService extends BaseService<Membership> {
           message: 'El usuario no existe',
         };
       }
+
+      // Para otros errores, retornar mensaje genérico
+      return {
+        hasActiveMembership: false,
+        message: 'Error al obtener información de membresía del usuario',
+      };
+    }
+  }
+
+  async getMembershipDetailById(
+    membershipId: number,
+  ): Promise<GetUserMembershipByUserIdResponseDto> {
+    try {
+      // Buscar membresía activa del usuario
+      const membership = await this.membershipRepository.findOne({
+        where: {
+          id: membershipId,
+        },
+        relations: ['plan'],
+      });
+
+      // Si no tiene membresía activa
+      if (!membership)
+        return {
+          hasActiveMembership: false,
+          message: 'El usuario no tiene membresía activa',
+        };
+
+      // Si tiene membresía activa, retornar los datos
+      return {
+        hasActiveMembership: true,
+        id: membership.id,
+        userId: membership.userId,
+        userName: membership.userName,
+        userEmail: membership.userEmail,
+        plan: {
+          id: membership.plan.id,
+          name: membership.plan.name,
+          commissionPercentage: membership.plan.commissionPercentage,
+          directCommissionAmount: membership.plan.directCommissionAmount,
+        },
+      };
+    } catch (error) {
+      this.logger.error(
+        `Error getting user membership for id ${membershipId}: ${error.message}`,
+      );
 
       // Para otros errores, retornar mensaje genérico
       return {

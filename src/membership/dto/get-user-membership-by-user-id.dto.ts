@@ -11,6 +11,7 @@ export class UserMembershipPlanDto {
   name: string;
   commissionPercentage: number;
   directCommissionAmount?: number;
+  binaryPoints?: number;
 }
 
 export class GetUserMembershipByUserIdResponseDto {
