@@ -167,7 +167,6 @@ export class MembershipService extends BaseService<Membership> {
           message: 'El usuario no tiene membresía activa',
         };
       }
-
       // Si tiene membresía activa, retornar los datos
       return {
         hasActiveMembership: true,
@@ -238,6 +237,7 @@ export class MembershipService extends BaseService<Membership> {
           name: membership.plan.name,
           commissionPercentage: membership.plan.commissionPercentage,
           directCommissionAmount: membership.plan.directCommissionAmount,
+          binaryPoints: membership.plan.binaryPoints,
         },
       };
     } catch (error) {
