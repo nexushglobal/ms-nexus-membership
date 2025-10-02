@@ -6,9 +6,11 @@ import { CreateSubscriptionPayload } from './dto/create-membership-subscription.
 import { FindExpiredMembershipsDto } from './dto/find-expired-memberships.dto';
 import { GetSubscriptionsReportDto } from './dto/get-subscriptions-report.dto';
 import { GetUserMembershipByUserIdDto } from './dto/get-user-membership-by-user-id.dto';
+import { ListMembershipsDto } from './dto/list-memberships.dto';
 import { UpdateMembershipEndDateDto } from './dto/update-membership-end-date.dto';
 import { UpdateMembershipStatusDto } from './dto/update-membership-status.dto';
 import { UpdateMembershipDto } from './dto/update-membership.dto';
+import { UpdateWelcomeKitStatusDto } from './dto/update-welcome-kit-status.dto';
 import { MembershipHistoryService } from './services/membership-history.service';
 import { MembershipSubscriptionService } from './services/membership-subscription.service';
 import { MembershipService } from './services/membership.service';
@@ -94,5 +96,15 @@ export class MembershipController {
       data.membershipId,
       data.status,
     );
+  }
+
+  @MessagePattern({ cmd: 'membership.listMemberships' })
+  listMemberships(@Payload() data: ListMembershipsDto) {
+    return this.membershipService.listMemberships(data);
+  }
+
+  @MessagePattern({ cmd: 'membership.updateWelcomeKitStatus' })
+  updateWelcomeKitStatus(@Payload() data: UpdateWelcomeKitStatusDto) {
+    return this.membershipService.updateWelcomeKitStatus(data);
   }
 }

@@ -7,6 +7,8 @@ import {
 } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Paginated } from 'src/common/dto/paginated.dto';
+import { paginate } from 'src/common/helpers/paginate.helper';
 import { BaseService } from 'src/common/services/base.service';
 import { UserService } from 'src/common/services/user.service';
 import { MembershipReconsumptionService } from 'src/membership-reconsumption/membership-reconsumption.service';
@@ -18,12 +20,21 @@ import {
 import { GetMembershipDetailResponseDto } from '../dto/get-membership-detail.dto';
 import { MembershipSubscriptionData } from '../dto/get-subscriptions-report.dto';
 import { GetUserMembershipByUserIdResponseDto } from '../dto/get-user-membership-by-user-id.dto';
+import {
+  ListMembershipsDto,
+  MembershipListItemDto,
+  MembershipListOrderBy,
+} from '../dto/list-memberships.dto';
 import { UpdateMembershipEndDateResponseDto } from '../dto/update-membership-end-date.dto';
 import { UpdateMembershipStatusResponseDto } from '../dto/update-membership-status.dto';
 import {
   UpdateMembershipDto,
   UpdateMembershipResponseDto,
 } from '../dto/update-membership.dto';
+import {
+  UpdateWelcomeKitStatusDto,
+  UpdateWelcomeKitStatusResponseDto,
+} from '../dto/update-welcome-kit-status.dto';
 import { UserMembershipInfoDto } from '../dto/user-membership-info.dto';
 import { Membership, MembershipStatus } from '../entities/membership.entity';
 import { formatGetMembershipDetailResponse } from '../helpers/format-get-membership-detail-response.helper';
@@ -304,7 +315,8 @@ export class MembershipService extends BaseService<Membership> {
   async updateMembership(
     data: UpdateMembershipDto,
   ): Promise<UpdateMembershipResponseDto> {
-    const { userId, isPointLot, useCard, autoRenewal } = data;
+    const { userId, isPointLot, useCard, autoRenewal, welcomeKitDelivered } =
+      data;
 
     try {
       // Buscar la membresía activa del usuario
@@ -335,6 +347,10 @@ export class MembershipService extends BaseService<Membership> {
         updateData.autoRenewal = autoRenewal;
       }
 
+      if (welcomeKitDelivered !== undefined) {
+        updateData.welcomeKitDelivered = welcomeKitDelivered;
+      }
+
       // Si no hay campos para actualizar
       if (Object.keys(updateData).length === 0) {
         throw new RpcException(
@@ -363,6 +379,7 @@ export class MembershipService extends BaseService<Membership> {
         isPointLot: updatedMembership.isPointLot,
         useCard: updatedMembership.useCard,
         autoRenewal: updatedMembership.autoRenewal,
+        welcomeKitDelivered: updatedMembership.welcomeKitDelivered,
       };
     } catch (error) {
       this.logger.error(
@@ -739,6 +756,111 @@ export class MembershipService extends BaseService<Membership> {
     } catch (error) {
       this.logger.error(`Error obteniendo plan ${planId}: ${error.message}`);
       throw error;
+    }
+  }
+
+  async listMemberships(
+    filters: ListMembershipsDto,
+  ): Promise<Paginated<MembershipListItemDto>> {
+    try {
+      const {
+        search,
+        welcomeKitDelivered,
+        orderBy = MembershipListOrderBy.NEWEST,
+        page = 1,
+        limit = 10,
+      } = filters;
+      const paginationDto = { page, limit };
+      this.logger.log(
+        `Listing memberships with filters: ${JSON.stringify(filters)}`,
+      );
+      const where: any = {};
+      // Filtro por entrega de kit de bienvenida
+      if (welcomeKitDelivered !== undefined)
+        where.welcomeKitDelivered = welcomeKitDelivered;
+      // Construir query builder para búsqueda y paginación
+      const queryBuilder =
+        this.membershipRepository.createQueryBuilder('membership');
+      // Join con la tabla de planes
+      queryBuilder.leftJoinAndSelect('membership.plan', 'plan');
+      // Aplicar filtro de kit de bienvenida si existe
+      if (welcomeKitDelivered !== undefined)
+        queryBuilder.andWhere('membership.welcomeKitDelivered = :welcomeKit', {
+          welcomeKit: welcomeKitDelivered,
+        });
+      // Filtro de búsqueda por nombre o correo
+      if (search && search.trim())
+        queryBuilder.andWhere(
+          '(LOWER(membership.userName) LIKE LOWER(:search) OR LOWER(membership.userEmail) LIKE LOWER(:search))',
+          { search: `%${search.trim()}%` },
+        );
+      if (orderBy === MembershipListOrderBy.NEWEST) {
+        queryBuilder.orderBy('membership.createdAt', 'DESC');
+      } else {
+        queryBuilder.orderBy('membership.createdAt', 'ASC');
+      }
+      const memberships = await queryBuilder.getMany();
+      // Mapear resultados al DTO de respuesta
+      const membershipItems: MembershipListItemDto[] = memberships.map(
+        (membership) => ({
+          id: membership.id,
+          userName: membership.userName || 'N/A',
+          userEmail: membership.userEmail,
+          planName: membership.plan?.name || 'Sin plan',
+          startDate: membership.startDate,
+          endDate: membership.endDate,
+          status: membership.status,
+          welcomeKitDelivered: membership.welcomeKitDelivered,
+          createdAt: membership.createdAt,
+        }),
+      );
+      const membershipsPages = await paginate(membershipItems, paginationDto);
+      return membershipsPages;
+    } catch (error) {
+      this.logger.error(`Error listing memberships: ${error.message}`);
+      throw new RpcException({
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: 'Error interno al listar membresías',
+      });
+    }
+  }
+
+  async updateWelcomeKitStatus(
+    data: UpdateWelcomeKitStatusDto,
+  ): Promise<UpdateWelcomeKitStatusResponseDto> {
+    const { membershipId, welcomeKitDelivered } = data;
+    try {
+      this.logger.log(
+        `Updating welcome kit status for membership ${membershipId} to ${welcomeKitDelivered}`,
+      );
+      // Buscar la membresía por ID
+      const membership = await this.membershipRepository.findOne({
+        where: { id: membershipId },
+      });
+      if (!membership)
+        throw new RpcException({
+          statusCode: HttpStatus.NOT_FOUND,
+          message: 'No se encontró la membresía especificada',
+        });
+      // Actualizar el estado del kit de bienvenida
+      await this.membershipRepository.update(membershipId, {
+        welcomeKitDelivered,
+      });
+      this.logger.log(
+        `Welcome kit status updated successfully for membership ${membershipId}`,
+      );
+      return {
+        message: `Estado del kit de bienvenida actualizado a ${welcomeKitDelivered ? 'entregado' : 'no entregado'}`,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Error updating welcome kit status for membership ${membershipId}: ${error.message}`,
+      );
+      if (error instanceof RpcException) throw error;
+      throw new RpcException({
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: 'Error interno al actualizar el estado del kit de bienvenida',
+      });
     }
   }
 }

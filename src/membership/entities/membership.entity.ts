@@ -87,6 +87,9 @@ export class Membership {
   @Column({ type: 'boolean', default: false, name: 'auto_renewal' })
   autoRenewal: boolean;
 
+  @Column({ type: 'boolean', default: false, name: 'welcome_kit_delivered' })
+  welcomeKitDelivered: boolean;
+
   @Column({ type: 'json', nullable: true })
   metadata?: Record<string, any>;
 

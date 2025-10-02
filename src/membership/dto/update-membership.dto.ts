@@ -15,6 +15,10 @@ export class UpdateMembershipDto {
   @IsOptional()
   @IsBoolean()
   autoRenewal?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  welcomeKitDelivered?: boolean;
 }
 
 export class UpdateMembershipResponseDto {
@@ -23,4 +27,5 @@ export class UpdateMembershipResponseDto {
   isPointLot: boolean;
   useCard: boolean;
   autoRenewal: boolean;
+  welcomeKitDelivered: boolean;
 }
