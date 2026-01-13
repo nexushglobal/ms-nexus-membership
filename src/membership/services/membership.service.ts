@@ -472,9 +472,9 @@ export class MembershipService extends BaseService<Membership> {
       const queryBuilder = this.membershipRepository
         .createQueryBuilder('membership')
         .leftJoinAndSelect('membership.plan', 'plan')
-        .where('membership.status = :status', {
-          status: MembershipStatus.ACTIVE,
-        })
+        // .where('membership.status = :status', {
+        //   status: MembershipStatus.ACTIVE,
+        // })
         .orderBy('membership.createdAt', 'DESC');
 
       // Aplicar filtros de fecha si se proporcionan
